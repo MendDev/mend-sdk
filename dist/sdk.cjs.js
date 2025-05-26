@@ -1,4 +1,7 @@
-"use strict";
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
 // mend-sdk.ts
 // Lightweight Type‑Safe Mend SDK (fetch‑based)
 // ---------------------------------------------------------------------------
@@ -8,8 +11,6 @@
 // • **No runtime React dep** – a React‑specific layer can live in
 //   `@mend/sdk/react` later if you wish.
 // ---------------------------------------------------------------------------
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MendSdk = void 0;
 /* ------------------------------------------------------------------------------------------------
  * Main SDK Class
  * ----------------------------------------------------------------------------------------------*/
@@ -119,8 +120,6 @@ class MendSdk {
         return this.request('POST', '/appointment', payload, undefined, signal);
     }
 }
+
 exports.MendSdk = MendSdk;
-/* ------------------------------------------------------------------------------------------------
- * Default export for CJS interop
- * ----------------------------------------------------------------------------------------------*/
 exports.default = MendSdk;
