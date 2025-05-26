@@ -2,6 +2,8 @@
 
 Lightweight TypeScript SDK for Mend's API.
 
+Requires **Node.js 18+** or a global `fetch` polyfill in older Node versions. In browsers, it works in modern environments that support `fetch`.
+
 ## Installation
 
 ```bash
