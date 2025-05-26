@@ -15,7 +15,10 @@
     }
   },
   "license": "MIT",
-  "repository": "github:MendDev/mend-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MendDev/mend-sdk.git"
+  },
   "author": "Mend",
   "keywords": [
     "mend",
