@@ -10,7 +10,7 @@
 /* ------------------------------------------------------------------------------------------------
  * Main SDK Class
  * ----------------------------------------------------------------------------------------------*/
-export class MendSdk {
+class MendSdk {
     constructor(opts) {
         var _a, _b;
         this.jwt = null;
@@ -116,7 +116,5 @@ export class MendSdk {
         return this.request('POST', '/appointment', payload, undefined, signal);
     }
 }
-/* ------------------------------------------------------------------------------------------------
- * Default export for CJS interop
- * ----------------------------------------------------------------------------------------------*/
-export default MendSdk;
+
+export { MendSdk, MendSdk as default };
