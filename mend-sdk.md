@@ -102,3 +102,5 @@ export function UserCard({ id }: { id: number }) {
 * You never call “login” yourself—the first authenticated method forces `sdk.authenticate()` automatically.
 * All helpers return **Promises**; add `AbortSignal` as the last arg to cancel.
 * Errors throw with a `.code` (`'SDK_CONFIG'`, `'AUTH_MISSING_TOKEN'`, `'HTTP_ERROR'`, …) so you can branch on type instead of parsing strings.
+
+#
