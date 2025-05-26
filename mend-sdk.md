@@ -5,7 +5,7 @@ Below are a few **copy-paste-ready** snippets that show how to use the new `Mend
 ### 1. Plain TypeScript / Node (ESM)
 
 ```ts
-import MendSdk from './mend-sdk.js';   // or `@mend/sdk` once you publish
+import MendSdk from '@mend/sdk';
 
 const sdk = new MendSdk({
   apiEndpoint : 'https://api.mendfamily.com',
@@ -83,7 +83,7 @@ export function UserCard({ id }: { id: number }) {
 ### 4. Minimal browser script (UMD)
 
 ```html
-<script src="https://cdn.mycdn.com/@mend/sdk@1.0.0/dist/index.umd.js"></script>
+<script src="https://unpkg.com/@mend/sdk@1/dist/sdk.umd.js"></script>
 <script>
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
