@@ -18,7 +18,8 @@ import MendSdk from '@mend/sdk';
 const sdk = new MendSdk({
   apiEndpoint: 'https://api.mendfamily.com',
   adminEmail: process.env.MEND_EMAIL!,
-  adminPassword: process.env.MEND_PASSWORD!
+  adminPassword: process.env.MEND_PASSWORD!,
+  adminOrgId: Number(process.env.MEND_ORG_ID!)
 });
 
 sdk.getUser(12345).then(console.log);
@@ -32,7 +33,8 @@ sdk.getUser(12345).then(console.log);
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
     adminEmail: 'email@example.com',
-    adminPassword: 'secret'
+    adminPassword: 'secret',
+    adminOrgId: 123
   });
   sdk.getUser(12345).then(console.log);
 </script>
