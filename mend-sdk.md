@@ -10,7 +10,8 @@ import MendSdk from '@mend/sdk';
 const sdk = new MendSdk({
   apiEndpoint : 'https://api.mendfamily.com',
   adminEmail  : process.env.MEND_EMAIL!,      // keep secrets out of source!
-  adminPassword: process.env.MEND_PASSWORD!
+  adminPassword: process.env.MEND_PASSWORD!,
+  adminOrgId  : Number(process.env.MEND_ORG_ID!)
 });
 
 (async () => {
@@ -47,7 +48,8 @@ import MendSdk from './mend-sdk';
 const sdk = new MendSdk({
   apiEndpoint  : import.meta.env.VITE_MEND_API,
   adminEmail   : import.meta.env.VITE_MEND_EMAIL,
-  adminPassword: import.meta.env.VITE_MEND_PASSWORD
+  adminPassword: import.meta.env.VITE_MEND_PASSWORD,
+  adminOrgId   : Number(import.meta.env.VITE_MEND_ORG_ID)
 });
 
 export function UserCard({ id }: { id: number }) {
@@ -88,7 +90,8 @@ export function UserCard({ id }: { id: number }) {
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
     adminEmail : 'service@mend.com',
-    adminPassword: '•••••'
+    adminPassword: '•••••',
+    adminOrgId : 123
   });
 
   sdk.getUser(12345).then(console.log);

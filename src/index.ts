@@ -18,6 +18,8 @@ export interface MendSdkOptions {
     /** Admin/service account credentials */
     adminEmail: string;
     adminPassword: string;
+    /** Organization ID for the admin/service account */
+    adminOrgId: number;
     /** Minutes before JWT refresh (default 55) */
     tokenTTL?: number;
     /** Optional default headers passed to **every** request (apart from auth headers). */
@@ -48,6 +50,7 @@ export interface MendSdkOptions {
     private readonly apiEndpoint: string;
     private readonly adminEmail: string;
     private readonly adminPassword: string;
+    private readonly adminOrgId: number;
     private readonly tokenTTL: number;
     private readonly defaultHeaders: Record<string, string>;
   
@@ -55,13 +58,14 @@ export interface MendSdkOptions {
     private jwtExpiresAt = 0; // epoch ms
   
     constructor (opts: MendSdkOptions) {
-      if (!opts?.apiEndpoint || !opts?.adminEmail || !opts?.adminPassword) {
-        throw Object.assign(new Error('apiEndpoint, adminEmail, and adminPassword are required'), { code: 'SDK_CONFIG' });
+      if (!opts?.apiEndpoint || !opts?.adminEmail || !opts?.adminPassword || opts.adminOrgId === undefined) {
+        throw Object.assign(new Error('apiEndpoint, adminEmail, adminPassword, and adminOrgId are required'), { code: 'SDK_CONFIG' });
       }
-  
+
       this.apiEndpoint    = opts.apiEndpoint.replace(/\/$/, '');
       this.adminEmail     = opts.adminEmail;
       this.adminPassword  = opts.adminPassword;
+      this.adminOrgId     = opts.adminOrgId;
       this.tokenTTL       = opts.tokenTTL ?? 55;
       this.defaultHeaders = opts.defaultHeaders ?? {};
     }
@@ -73,7 +77,8 @@ export interface MendSdkOptions {
     private async authenticate (): Promise<void> {
       const res = await this.fetch<Json>('POST', '/session', {
         email   : this.adminEmail,
-        password: this.adminPassword
+        password: this.adminPassword,
+        orgId   : this.adminOrgId
       }, {}, /* skipAuth = */ true);
   
       const token = (res as any).token as string | undefined;

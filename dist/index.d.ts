@@ -4,6 +4,8 @@ export interface MendSdkOptions {
     /** Admin/service account credentials */
     adminEmail: string;
     adminPassword: string;
+    /** Organization ID for the admin/service account */
+    adminOrgId: number;
     /** Minutes before JWT refresh (default 55) */
     tokenTTL?: number;
     /** Optional default headers passed to **every** request (apart from auth headers). */
@@ -22,6 +24,7 @@ export declare class MendSdk {
     private readonly apiEndpoint;
     private readonly adminEmail;
     private readonly adminPassword;
+    private readonly adminOrgId;
     private readonly tokenTTL;
     private readonly defaultHeaders;
     private jwt;
