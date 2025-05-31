@@ -18,8 +18,8 @@ export interface MendSdkOptions {
     /** Admin/service account credentials */
     adminEmail: string;
     adminPassword: string;
-    /** Organization ID for the admin/service account */
-    adminOrgId: number;
+    /** Optional organization ID to automatically switch to after login */
+    adminOrgId?: number;
     /** Minutes before JWT refresh (default 55) */
     tokenTTL?: number;
     /** Optional default headers passed to **every** request (apart from auth headers). */
@@ -50,16 +50,19 @@ export interface MendSdkOptions {
     private readonly apiEndpoint: string;
     private readonly adminEmail: string;
     private readonly adminPassword: string;
-    private readonly adminOrgId: number;
+    private readonly adminOrgId?: number;
     private readonly tokenTTL: number;
     private readonly defaultHeaders: Record<string, string>;
+
+    private activeOrgId: number | null = null;
+    private availableOrgs: Json[] | null = null;
   
     private jwt: string | null = null;
     private jwtExpiresAt = 0; // epoch ms
   
     constructor (opts: MendSdkOptions) {
-      if (!opts?.apiEndpoint || !opts?.adminEmail || !opts?.adminPassword || opts.adminOrgId === undefined) {
-        throw Object.assign(new Error('apiEndpoint, adminEmail, adminPassword, and adminOrgId are required'), { code: 'SDK_CONFIG' });
+      if (!opts?.apiEndpoint || !opts?.adminEmail || !opts?.adminPassword) {
+        throw Object.assign(new Error('apiEndpoint, adminEmail and adminPassword are required'), { code: 'SDK_CONFIG' });
       }
 
       this.apiEndpoint    = opts.apiEndpoint.replace(/\/$/, '');
@@ -77,17 +80,28 @@ export interface MendSdkOptions {
     private async authenticate (): Promise<void> {
       const res = await this.fetch<Json>('POST', '/session', {
         email   : this.adminEmail,
-        password: this.adminPassword,
-        orgId   : this.adminOrgId
+        password: this.adminPassword
       }, {}, /* skipAuth = */ true);
   
       const token = (res as any).token as string | undefined;
       if (!token) {
         throw Object.assign(new Error('JWT not returned by /session'), { code: 'AUTH_MISSING_TOKEN' });
       }
-  
+
       this.jwt = token;
       this.jwtExpiresAt = Date.now() + this.tokenTTL * 60_000;
+
+      if (this.adminOrgId !== undefined) {
+        await this.switchOrg(this.adminOrgId);
+      } else {
+        const orgs = await this.listOrgs();
+        this.availableOrgs = Array.isArray(orgs?.payload) ? (orgs as any).payload : (orgs as any)?.payload?.orgs;
+        if (Array.isArray(this.availableOrgs) && this.availableOrgs.length === 1) {
+          const first = this.availableOrgs[0];
+          const id = (first as any).id ?? (first as any).orgId;
+          if (id) await this.switchOrg(id);
+        }
+      }
     }
   
     private async ensureAuth (): Promise<void> {
@@ -192,6 +206,24 @@ export interface MendSdkOptions {
   
     public createAppointment (payload: Json, signal?: AbortSignal) {
       return this.request<Json>('POST', '/appointment', payload, undefined, signal);
+    }
+
+    public listOrgs (signal?: AbortSignal) {
+      return this.request<Json>('GET', '/org', undefined, undefined, signal);
+    }
+
+    public async switchOrg (orgId: number, signal?: AbortSignal): Promise<void> {
+      await this.request<Json>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+      this.activeOrgId = orgId;
+    }
+
+    public async getProperties (signal?: AbortSignal) {
+      return this.request<Json>('GET', '/property', undefined, undefined, signal);
+    }
+
+    public async getProperty (key: string, signal?: AbortSignal) {
+      const props = await this.getProperties(signal);
+      return (props as any)?.payload?.properties?.[key];
     }
   }
   
