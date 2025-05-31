@@ -10,18 +10,21 @@
 /* ------------------------------------------------------------------------------------------------
  * Main SDK Class
  * ----------------------------------------------------------------------------------------------*/
-class MendSdk {
+export class MendSdk {
     constructor(opts) {
         var _a, _b;
+        this.activeOrgId = null;
+        this.availableOrgs = null;
         this.jwt = null;
         this.jwtExpiresAt = 0; // epoch ms
-        if (!(opts === null || opts === void 0 ? void 0 : opts.apiEndpoint) || !(opts === null || opts === void 0 ? void 0 : opts.adminEmail) || !(opts === null || opts === void 0 ? void 0 : opts.adminPassword) || opts.adminOrgId === void 0) {
-            throw Object.assign(new Error('apiEndpoint, adminEmail, adminPassword, and adminOrgId are required'), { code: 'SDK_CONFIG' });
+        if (!(opts === null || opts === void 0 ? void 0 : opts.apiEndpoint) || !(opts === null || opts === void 0 ? void 0 : opts.adminEmail) || !(opts === null || opts === void 0 ? void 0 : opts.adminPassword)) {
+            throw Object.assign(new Error('apiEndpoint, adminEmail and adminPassword are required'), { code: 'SDK_CONFIG' });
         }
         this.apiEndpoint = opts.apiEndpoint.replace(/\/$/, '');
         this.adminEmail = opts.adminEmail;
         this.adminPassword = opts.adminPassword;
-        this.adminOrgId = opts.adminOrgId;
+        this.orgId = opts.orgId;
+        this.mfaCode = opts.mfaCode;
         this.tokenTTL = (_a = opts.tokenTTL) !== null && _a !== void 0 ? _a : 55;
         this.defaultHeaders = (_b = opts.defaultHeaders) !== null && _b !== void 0 ? _b : {};
     }
@@ -31,15 +34,46 @@ class MendSdk {
     async authenticate() {
         const res = await this.fetch('POST', '/session', {
             email: this.adminEmail,
-            password: this.adminPassword,
-            orgId: this.adminOrgId
+            password: this.adminPassword
         }, {}, /* skipAuth = */ true);
+        const token = res.token;
+        if (token) {
+            await this.completeLogin(res);
+            return;
+        }
+        if (this.mfaCode !== undefined) {
+            await this.submitMfaCode(this.mfaCode);
+            return;
+        }
+        throw Object.assign(new Error('JWT not returned by /session'), { code: 'AUTH_MISSING_TOKEN' });
+    }
+    async completeLogin(res) {
+        var _a, _b;
         const token = res.token;
         if (!token) {
             throw Object.assign(new Error('JWT not returned by /session'), { code: 'AUTH_MISSING_TOKEN' });
         }
         this.jwt = token;
         this.jwtExpiresAt = Date.now() + this.tokenTTL * 60000;
+        const payload = res === null || res === void 0 ? void 0 : res.payload;
+        if (Array.isArray(payload === null || payload === void 0 ? void 0 : payload.orgs)) {
+            this.availableOrgs = payload.orgs;
+        }
+        if (this.orgId !== undefined) {
+            await this.switchOrg(this.orgId);
+        }
+        else {
+            if (!this.availableOrgs) {
+                const orgs = await this.listOrgs();
+                this.availableOrgs = Array.isArray(orgs === null || orgs === void 0 ? void 0 : orgs.payload) ? orgs.payload : (_a = orgs === null || orgs === void 0 ? void 0 : orgs.payload) === null || _a === void 0 ? void 0 : _a.orgs;
+            }
+            if (Array.isArray(this.availableOrgs) && this.availableOrgs.length === 1) {
+                const first = this.availableOrgs[0];
+                const id = (_b = first.id) !== null && _b !== void 0 ? _b : first.orgId;
+                if (id)
+                    await this.switchOrg(id);
+            }
+        }
     }
     async ensureAuth() {
         if (!this.jwt || Date.now() >= this.jwtExpiresAt) {
@@ -117,6 +151,30 @@ class MendSdk {
     createAppointment(payload, signal) {
         return this.request('POST', '/appointment', payload, undefined, signal);
     }
+    listOrgs(signal) {
+        return this.request('GET', '/org', undefined, undefined, signal);
+    }
+    /**
+     * Provide a 6‑digit MFA code after calling {@link authenticate}.
+     */
+    async submitMfaCode(code, signal) {
+        const res = await this.fetch('PUT', '/session/mfa', { mfaCode: code }, {}, true, signal);
+        await this.completeLogin(res);
+    }
+    async switchOrg(orgId, signal) {
+        await this.request('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+        this.activeOrgId = orgId;
+    }
+    async getProperties(signal) {
+        return this.request('GET', '/property', undefined, undefined, signal);
+    }
+    async getProperty(key, signal) {
+        var _a, _b;
+        const props = await this.getProperties(signal);
+        return (_b = (_a = props === null || props === void 0 ? void 0 : props.payload) === null || _a === void 0 ? void 0 : _a.properties) === null || _b === void 0 ? void 0 : _b[key];
+    }
 }
-
-export { MendSdk, MendSdk as default };
+/* ------------------------------------------------------------------------------------------------
+ * Default export for CJS interop
+ * ----------------------------------------------------------------------------------------------*/
+export default MendSdk;
