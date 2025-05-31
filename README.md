@@ -19,7 +19,8 @@ const sdk = new MendSdk({
   apiEndpoint: 'https://api.mendfamily.com',
   adminEmail: process.env.MEND_EMAIL!,
   adminPassword: process.env.MEND_PASSWORD!,
-  adminOrgId: Number(process.env.MEND_ORG_ID!)
+  orgId: Number(process.env.MEND_ORG_ID!),
+  mfaCode: process.env.MEND_MFA_CODE
 });
 
 sdk.getUser(12345).then(console.log);
@@ -34,7 +35,8 @@ sdk.getUser(12345).then(console.log);
     apiEndpoint: 'https://api.mendfamily.com',
     adminEmail: 'email@example.com',
     adminPassword: 'secret',
-    adminOrgId: 123
+    orgId: 123,
+    mfaCode: '123456'
   });
   sdk.getUser(12345).then(console.log);
 </script>
@@ -49,6 +51,19 @@ sdk.getUser(12345).then(console.log);
 const rawUser = await sdk.request('GET', '/user/12345');
 ```
 
+### MFA
+
+```ts
+const sdk = new MendSdk({
+  apiEndpoint: 'https://api.mendfamily.com',
+  adminEmail: 'user@example.com',
+  adminPassword: 'secret'
+});
+
+// After the code is sent to the user
+await sdk.submitMfaCode('123456');
+```
+
 ### React component with abort-on-unmount
 
 ```tsx
@@ -59,7 +74,7 @@ const sdk = new MendSdk({
   apiEndpoint  : import.meta.env.VITE_MEND_API,
   adminEmail   : import.meta.env.VITE_MEND_EMAIL,
   adminPassword: import.meta.env.VITE_MEND_PASSWORD,
-  adminOrgId   : Number(import.meta.env.VITE_MEND_ORG_ID)
+  orgId        : Number(import.meta.env.VITE_MEND_ORG_ID)
 });
 
 export function UserCard({ id }: { id: number }) {
@@ -99,7 +114,8 @@ export function UserCard({ id }: { id: number }) {
     apiEndpoint: 'https://api.mendfamily.com',
     adminEmail : 'service@mend.com',
     adminPassword: '•••••',
-    adminOrgId : 123
+    orgId : 123,
+    mfaCode: '123456'
   });
 
   sdk.getUser(12345).then(console.log);
@@ -109,6 +125,7 @@ export function UserCard({ id }: { id: number }) {
 ### Key points
 
 * The first authenticated call automatically logs in and caches the JWT.
+* If only one organization is available the SDK will automatically switch to it.
 * All helpers return **Promises** and accept `AbortSignal` as the last argument.
 * Errors include a `.code` such as `'SDK_CONFIG'`, `'AUTH_MISSING_TOKEN'` or `'HTTP_ERROR'` so you can branch on them.
 

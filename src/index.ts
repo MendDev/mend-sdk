@@ -13,18 +13,20 @@
  * ----------------------------------------------------------------------------------------------*/
 
 export interface MendSdkOptions {
-    /** Base REST endpoint, e.g. "https://api.mend.com/v2" (no trailing slash) */
-    apiEndpoint: string;
-    /** Admin/service account credentials */
-    adminEmail: string;
-    adminPassword: string;
-    /** Optional organization ID to automatically switch to after login */
-    adminOrgId?: number;
-    /** Minutes before JWT refresh (default 55) */
-    tokenTTL?: number;
-    /** Optional default headers passed to **every** request (apart from auth headers). */
-    defaultHeaders?: Record<string, string>;
-  }
+  /** Base REST endpoint, e.g. "https://api.mend.com/v2" (no trailing slash) */
+  apiEndpoint: string;
+  /** Admin/service account credentials */
+  adminEmail: string;
+  adminPassword: string;
+  /** Optional organization ID to automatically switch to after login */
+  orgId?: number;
+  /** Optional MFA code for accounts that require it */
+  mfaCode?: string | number;
+  /** Minutes before JWT refresh (default 55) */
+  tokenTTL?: number;
+  /** Optional default headers passed to **every** request (apart from auth headers). */
+  defaultHeaders?: Record<string, string>;
+}
   
   export interface MendError extends Error {
     /** Programmatic error category */
@@ -50,7 +52,8 @@ export interface MendSdkOptions {
     private readonly apiEndpoint: string;
     private readonly adminEmail: string;
     private readonly adminPassword: string;
-    private readonly adminOrgId?: number;
+    private readonly orgId?: number;
+    private readonly mfaCode?: string | number;
     private readonly tokenTTL: number;
     private readonly defaultHeaders: Record<string, string>;
 
@@ -68,7 +71,8 @@ export interface MendSdkOptions {
       this.apiEndpoint    = opts.apiEndpoint.replace(/\/$/, '');
       this.adminEmail     = opts.adminEmail;
       this.adminPassword  = opts.adminPassword;
-      this.adminOrgId     = opts.adminOrgId;
+      this.orgId          = opts.orgId;
+      this.mfaCode        = opts.mfaCode;
       this.tokenTTL       = opts.tokenTTL ?? 55;
       this.defaultHeaders = opts.defaultHeaders ?? {};
     }
@@ -82,7 +86,22 @@ export interface MendSdkOptions {
         email   : this.adminEmail,
         password: this.adminPassword
       }, {}, /* skipAuth = */ true);
-  
+
+      const token = (res as any).token as string | undefined;
+      if (token) {
+        await this.completeLogin(res);
+        return;
+      }
+
+      if (this.mfaCode !== undefined) {
+        await this.submitMfaCode(this.mfaCode);
+        return;
+      }
+
+      throw Object.assign(new Error('JWT not returned by /session'), { code: 'AUTH_MISSING_TOKEN' });
+    }
+
+    private async completeLogin (res: Json): Promise<void> {
       const token = (res as any).token as string | undefined;
       if (!token) {
         throw Object.assign(new Error('JWT not returned by /session'), { code: 'AUTH_MISSING_TOKEN' });
@@ -91,11 +110,18 @@ export interface MendSdkOptions {
       this.jwt = token;
       this.jwtExpiresAt = Date.now() + this.tokenTTL * 60_000;
 
-      if (this.adminOrgId !== undefined) {
-        await this.switchOrg(this.adminOrgId);
+      const payload = (res as any)?.payload;
+      if (Array.isArray(payload?.orgs)) {
+        this.availableOrgs = payload.orgs;
+      }
+
+      if (this.orgId !== undefined) {
+        await this.switchOrg(this.orgId);
       } else {
-        const orgs = await this.listOrgs();
-        this.availableOrgs = Array.isArray(orgs?.payload) ? (orgs as any).payload : (orgs as any)?.payload?.orgs;
+        if (!this.availableOrgs) {
+          const orgs = await this.listOrgs();
+          this.availableOrgs = Array.isArray(orgs?.payload) ? (orgs as any).payload : (orgs as any)?.payload?.orgs;
+        }
         if (Array.isArray(this.availableOrgs) && this.availableOrgs.length === 1) {
           const first = this.availableOrgs[0];
           const id = (first as any).id ?? (first as any).orgId;
@@ -210,6 +236,14 @@ export interface MendSdkOptions {
 
     public listOrgs (signal?: AbortSignal) {
       return this.request<Json>('GET', '/org', undefined, undefined, signal);
+    }
+
+    /**
+     * Provide a 6‑digit MFA code after calling {@link authenticate}.
+     */
+    public async submitMfaCode (code: string | number, signal?: AbortSignal): Promise<void> {
+      const res = await this.fetch<Json>('PUT', '/session/mfa', { mfaCode: code }, {}, true, signal);
+      await this.completeLogin(res);
     }
 
     public async switchOrg (orgId: number, signal?: AbortSignal): Promise<void> {

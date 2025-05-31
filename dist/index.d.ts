@@ -4,8 +4,10 @@ export interface MendSdkOptions {
     /** Admin/service account credentials */
     adminEmail: string;
     adminPassword: string;
-    /** Organization ID for the admin/service account */
-    adminOrgId: number;
+    /** Optional organization ID to automatically switch to after login */
+    orgId?: number;
+    /** Optional MFA code for accounts that require it */
+    mfaCode?: string | number;
     /** Minutes before JWT refresh (default 55) */
     tokenTTL?: number;
     /** Optional default headers passed to **every** request (apart from auth headers). */
@@ -24,13 +26,17 @@ export declare class MendSdk {
     private readonly apiEndpoint;
     private readonly adminEmail;
     private readonly adminPassword;
-    private readonly adminOrgId;
+    private readonly orgId?;
+    private readonly mfaCode?;
     private readonly tokenTTL;
     private readonly defaultHeaders;
+    private activeOrgId;
+    private availableOrgs;
     private jwt;
     private jwtExpiresAt;
     constructor(opts: MendSdkOptions);
     private authenticate;
+    private completeLogin;
     private ensureAuth;
     private fetch;
     /**
@@ -48,5 +54,13 @@ export declare class MendSdk {
     listPatients(search: string, page?: number, limit?: number, signal?: AbortSignal): Promise<Json>;
     getAppointment(appointmentId: number, signal?: AbortSignal): Promise<Json>;
     createAppointment(payload: Json, signal?: AbortSignal): Promise<Json>;
+    listOrgs(signal?: AbortSignal): Promise<Json>;
+    /**
+     * Provide a 6‑digit MFA code after calling {@link authenticate}.
+     */
+    submitMfaCode(code: string | number, signal?: AbortSignal): Promise<void>;
+    switchOrg(orgId: number, signal?: AbortSignal): Promise<void>;
+    getProperties(signal?: AbortSignal): Promise<Json>;
+    getProperty(key: string, signal?: AbortSignal): Promise<any>;
 }
 export default MendSdk;
