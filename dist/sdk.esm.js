@@ -142,8 +142,25 @@ export class MendSdk {
     getUser(userId, signal) {
         return this.request('GET', `/user/${userId}`, undefined, undefined, signal);
     }
-    listPatients(search, page = 1, limit = 25, signal) {
-        return this.request('GET', '/patient', undefined, { search, page, limit }, signal);
+    searchPatients(query = {}, signal) {
+        return this.request('GET', '/patient', undefined, query, signal);
+    }
+    getPatient(id, signal) {
+        return this.request('GET', `/patient/${id}`, undefined, undefined, signal);
+    }
+    getPatientAssessmentScores(id, signal) {
+        return this.request('GET', `/patient/${id}/assessment-scores`, undefined, undefined, signal);
+    }
+    createPatient(payload, force = false, signal) {
+        const path = force ? '/patient/force' : '/patient';
+        return this.request('POST', path, payload, undefined, signal);
+    }
+    updatePatient(id, payload, force = false, signal) {
+        const path = force ? `/patient/${id}/force` : `/patient/${id}`;
+        return this.request('PUT', path, payload, undefined, signal);
+    }
+    deletePatient(id, signal) {
+        return this.request('DELETE', `/patient/${id}`, undefined, undefined, signal);
     }
     getAppointment(appointmentId, signal) {
         return this.request('GET', `/appointment/${appointmentId}`, undefined, undefined, signal);
