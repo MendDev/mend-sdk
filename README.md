@@ -17,8 +17,8 @@ import MendSdk from '@mend/sdk';
 
 const sdk = new MendSdk({
   apiEndpoint: 'https://api.mendfamily.com',
-  adminEmail: process.env.MEND_EMAIL!,
-  adminPassword: process.env.MEND_PASSWORD!,
+  email: process.env.MEND_EMAIL!,
+  password: process.env.MEND_PASSWORD!,
   orgId: Number(process.env.MEND_ORG_ID!),
   mfaCode: process.env.MEND_MFA_CODE
 });
@@ -33,8 +33,8 @@ sdk.getUser(12345).then(console.log);
 <script>
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
-    adminEmail: 'email@example.com',
-    adminPassword: 'secret',
+    email: 'email@example.com',
+    password: 'secret',
     orgId: 123,
     mfaCode: '123456'
   });
@@ -56,8 +56,8 @@ const rawUser = await sdk.request('GET', '/user/12345');
 ```ts
 const sdk = new MendSdk({
   apiEndpoint: 'https://api.mendfamily.com',
-  adminEmail: 'user@example.com',
-  adminPassword: 'secret'
+  email: 'user@example.com',
+  password: 'secret'
 });
 
 // After the code is sent to the user
@@ -72,8 +72,8 @@ import MendSdk from '@mend/sdk';
 
 const sdk = new MendSdk({
   apiEndpoint  : import.meta.env.VITE_MEND_API,
-  adminEmail   : import.meta.env.VITE_MEND_EMAIL,
-  adminPassword: import.meta.env.VITE_MEND_PASSWORD,
+  email   : import.meta.env.VITE_MEND_EMAIL,
+  password: import.meta.env.VITE_MEND_PASSWORD,
   orgId        : Number(import.meta.env.VITE_MEND_ORG_ID)
 });
 
@@ -112,8 +112,8 @@ export function UserCard({ id }: { id: number }) {
 <script>
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
-    adminEmail : 'service@mend.com',
-    adminPassword: '•••••',
+    email : 'service@mend.com',
+    password: '•••••',
     orgId : 123,
     mfaCode: '123456'
   });

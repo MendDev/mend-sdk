@@ -20,12 +20,12 @@ class MendSdk {
         this.availableOrgs = null;
         this.jwt = null;
         this.jwtExpiresAt = 0; // epoch ms
-        if (!(opts === null || opts === void 0 ? void 0 : opts.apiEndpoint) || !(opts === null || opts === void 0 ? void 0 : opts.adminEmail) || !(opts === null || opts === void 0 ? void 0 : opts.adminPassword)) {
-            throw Object.assign(new Error('apiEndpoint, adminEmail and adminPassword are required'), { code: 'SDK_CONFIG' });
+        if (!(opts === null || opts === void 0 ? void 0 : opts.apiEndpoint) || !(opts === null || opts === void 0 ? void 0 : opts.email) || !(opts === null || opts === void 0 ? void 0 : opts.password)) {
+            throw Object.assign(new Error('apiEndpoint, email and password are required'), { code: 'SDK_CONFIG' });
         }
         this.apiEndpoint = opts.apiEndpoint.replace(/\/$/, '');
-        this.adminEmail = opts.adminEmail;
-        this.adminPassword = opts.adminPassword;
+        this.email = opts.email;
+        this.password = opts.password;
         this.orgId = opts.orgId;
         this.mfaCode = opts.mfaCode;
         this.tokenTTL = (_a = opts.tokenTTL) !== null && _a !== void 0 ? _a : 55;
@@ -36,8 +36,8 @@ class MendSdk {
     /* ------------------------------------------------------------------------------------------ */
     async authenticate() {
         const res = await this.fetch('POST', '/session', {
-            email: this.adminEmail,
-            password: this.adminPassword
+            email: this.email,
+            password: this.password
         }, {}, /* skipAuth = */ true);
         const token = res.token;
         if (token) {
