@@ -16,8 +16,8 @@ export interface MendSdkOptions {
   /** Base REST endpoint, e.g. "https://api.mend.com/v2" (no trailing slash) */
   apiEndpoint: string;
   /** Admin/service account credentials */
-  adminEmail: string;
-  adminPassword: string;
+  email: string;
+  password: string;
   /** Optional organization ID to automatically switch to after login */
   orgId?: number;
   /** Optional MFA code for accounts that require it */
@@ -50,8 +50,8 @@ export interface MendSdkOptions {
   
   export class MendSdk {
     private readonly apiEndpoint: string;
-    private readonly adminEmail: string;
-    private readonly adminPassword: string;
+    private readonly email: string;
+    private readonly password: string;
     private readonly orgId?: number;
     private readonly mfaCode?: string | number;
     private readonly tokenTTL: number;
@@ -64,13 +64,13 @@ export interface MendSdkOptions {
     private jwtExpiresAt = 0; // epoch ms
   
     constructor (opts: MendSdkOptions) {
-      if (!opts?.apiEndpoint || !opts?.adminEmail || !opts?.adminPassword) {
-        throw Object.assign(new Error('apiEndpoint, adminEmail and adminPassword are required'), { code: 'SDK_CONFIG' });
+      if (!opts?.apiEndpoint || !opts?.email || !opts?.password) {
+        throw Object.assign(new Error('apiEndpoint, email and password are required'), { code: 'SDK_CONFIG' });
       }
 
       this.apiEndpoint    = opts.apiEndpoint.replace(/\/$/, '');
-      this.adminEmail     = opts.adminEmail;
-      this.adminPassword  = opts.adminPassword;
+      this.email          = opts.email;
+      this.password       = opts.password;
       this.orgId          = opts.orgId;
       this.mfaCode        = opts.mfaCode;
       this.tokenTTL       = opts.tokenTTL ?? 55;
@@ -83,8 +83,8 @@ export interface MendSdkOptions {
   
     private async authenticate (): Promise<void> {
       const res = await this.fetch<Json>('POST', '/session', {
-        email   : this.adminEmail,
-        password: this.adminPassword
+        email   : this.email,
+        password: this.password
       }, {}, /* skipAuth = */ true);
 
       const token = (res as any).token as string | undefined;

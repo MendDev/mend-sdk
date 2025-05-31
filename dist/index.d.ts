@@ -2,8 +2,8 @@ export interface MendSdkOptions {
     /** Base REST endpoint, e.g. "https://api.mend.com/v2" (no trailing slash) */
     apiEndpoint: string;
     /** Admin/service account credentials */
-    adminEmail: string;
-    adminPassword: string;
+    email: string;
+    password: string;
     /** Optional organization ID to automatically switch to after login */
     orgId?: number;
     /** Optional MFA code for accounts that require it */
@@ -24,8 +24,8 @@ interface Json extends Record<string, unknown> {
 type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export declare class MendSdk {
     private readonly apiEndpoint;
-    private readonly adminEmail;
-    private readonly adminPassword;
+    private readonly email;
+    private readonly password;
     private readonly orgId?;
     private readonly mfaCode?;
     private readonly tokenTTL;
