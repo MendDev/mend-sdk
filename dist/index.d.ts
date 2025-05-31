@@ -51,7 +51,12 @@ export declare class MendSdk {
     request<T = Json>(method: HttpVerb, path: string, body?: unknown, query?: Record<string, string | number | boolean>, signal?: AbortSignal): Promise<T>;
     getOrg(orgId: number, signal?: AbortSignal): Promise<Json>;
     getUser(userId: number, signal?: AbortSignal): Promise<Json>;
-    listPatients(search: string, page?: number, limit?: number, signal?: AbortSignal): Promise<Json>;
+    searchPatients(query?: Record<string, string | number | boolean>, signal?: AbortSignal): Promise<Json>;
+    getPatient(id: number, signal?: AbortSignal): Promise<Json>;
+    getPatientAssessmentScores(id: number, signal?: AbortSignal): Promise<Json>;
+    createPatient(payload: Json, force?: boolean, signal?: AbortSignal): Promise<Json>;
+    updatePatient(id: number, payload: Json, force?: boolean, signal?: AbortSignal): Promise<Json>;
+    deletePatient(id: number, signal?: AbortSignal): Promise<Json>;
     getAppointment(appointmentId: number, signal?: AbortSignal): Promise<Json>;
     createAppointment(payload: Json, signal?: AbortSignal): Promise<Json>;
     listOrgs(signal?: AbortSignal): Promise<Json>;

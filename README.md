@@ -129,6 +129,71 @@ export function UserCard({ id }: { id: number }) {
 * All helpers return **Promises** and accept `AbortSignal` as the last argument.
 * Errors include a `.code` such as `'SDK_CONFIG'`, `'AUTH_MISSING_TOKEN'` or `'HTTP_ERROR'` so you can branch on them.
 
+## Patient helpers
+
+The SDK exposes helper methods covering all `/patient` routes.  Searching accepts
+any of the query parameters supported by the API (see below).
+
+### Search patients
+
+```ts
+// Basic free‑text search with paging
+const list = await sdk.searchPatients({ search: 'Jane', page: 1, limit: 50 });
+
+// Advanced filtering
+const results = await sdk.searchPatients({
+  firstName: 'John',
+  lastName: '~Doe',       // partial match
+  birthDate: '>1990-01-01',
+  order: 'birthDate desc'
+});
+```
+
+### CRUD operations
+
+```ts
+// Create a patient and then update them
+const created = await sdk.createPatient({
+  firstName: 'Jane',
+  lastName : 'Doe',
+  email    : 'jane.doe@example.com',
+  birthDate: '1990-01-02'
+});
+
+// Force creation bypasses age checks
+await sdk.createPatient({
+  firstName: 'Minor',
+  lastName : 'Kid',
+  email    : 'kid@example.com',
+  birthDate: '2018-05-01'
+}, true);
+
+const patient = await sdk.getPatient(created.payload.patient.id);
+
+await sdk.updatePatient(patient.payload.patient.id, { mobile: '5551234567' });
+
+// Force update ignores change limits
+await sdk.updatePatient(patient.payload.patient.id, { firstName: 'J' }, true);
+
+await sdk.deletePatient(patient.payload.patient.id);
+```
+
+#### Search parameters
+
+`searchPatients()` accepts the same filters as the API.  Provide any
+combination of fields as query parameters:
+
+- `search` – free‑text search across name, email, phone and more.
+- `page` / `limit` – pagination controls (defaults to page 1, limit 100).
+- Field filters such as `firstName`, `lastName`, `email`, `birthDate`, etc.
+  Use `~` for partial matches (`lastName: '~Smi'`).
+- Range comparisons on numeric/date fields using `>` `<` `>=` `<=` or `!<` / `!>`.
+- Arrays to match multiple values: `state: ['NY','CA']`.
+- `order` – sort results, e.g. `order: 'lastName asc, firstName asc'`.
+
+Unknown keys are ignored.  The method returns the paginated list of matching
+patients.
+
 ## Development
 
 ```bash

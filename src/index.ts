@@ -222,8 +222,31 @@ export interface MendSdkOptions {
       return this.request<Json>('GET', `/user/${userId}`, undefined, undefined, signal);
     }
   
-    public listPatients (search: string, page = 1, limit = 25, signal?: AbortSignal) {
-      return this.request<Json>('GET', '/patient', undefined, { search, page, limit }, signal);
+    public searchPatients (query: Record<string, string | number | boolean> = {}, signal?: AbortSignal) {
+      return this.request<Json>('GET', '/patient', undefined, query, signal);
+    }
+
+    public getPatient (id: number, signal?: AbortSignal) {
+      return this.request<Json>('GET', `/patient/${id}`, undefined, undefined, signal);
+    }
+
+
+    public getPatientAssessmentScores (id: number, signal?: AbortSignal) {
+      return this.request<Json>('GET', `/patient/${id}/assessment-scores`, undefined, undefined, signal);
+    }
+
+    public createPatient (payload: Json, force = false, signal?: AbortSignal) {
+      const path = force ? '/patient/force' : '/patient';
+      return this.request<Json>('POST', path, payload, undefined, signal);
+    }
+
+    public updatePatient (id: number, payload: Json, force = false, signal?: AbortSignal) {
+      const path = force ? `/patient/${id}/force` : `/patient/${id}`;
+      return this.request<Json>('PUT', path, payload, undefined, signal);
+    }
+
+    public deletePatient (id: number, signal?: AbortSignal) {
+      return this.request<Json>('DELETE', `/patient/${id}`, undefined, undefined, signal);
     }
   
     public getAppointment (appointmentId: number, signal?: AbortSignal) {
