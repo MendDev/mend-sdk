@@ -7,6 +7,7 @@
 // • **No runtime React dep** – a React‑specific layer can live in
 //   `@mend/sdk/react` later if you wish.
 // ---------------------------------------------------------------------------
+import { MendError, ERROR_CODES } from './errors';
 
 /* ------------------------------------------------------------------------------------------------
  * Public Types
@@ -28,18 +29,15 @@ export interface MendSdkOptions {
   defaultHeaders?: Record<string, string>;
 }
 
-export interface MendError extends Error {
-  /** Programmatic error category */
-  code: string;
-  /** HTTP status if applicable */
-  status?: number;
-}
+// Re-export MendError for consumers
+export { MendError, ERROR_CODES } from './errors';
 
 /* ------------------------------------------------------------------------------------------------
  * Internal Types
  * ----------------------------------------------------------------------------------------------*/
 
-interface Json extends Record<string, unknown> {}
+// Enhanced Json type with generics
+interface Json<T = unknown> extends Record<string, T> {}
 
 type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -57,16 +55,14 @@ export class MendSdk {
   private readonly defaultHeaders: Record<string, string>;
 
   private activeOrgId: number | null = null;
-  private availableOrgs: Json[] | null = null;
+  private availableOrgs: Json<any>[] | null = null;
 
   private jwt: string | null = null;
   private jwtExpiresAt = 0; // epoch ms
 
   constructor(opts: MendSdkOptions) {
     if (!opts?.apiEndpoint || !opts?.email || !opts?.password) {
-      throw Object.assign(new Error('apiEndpoint, email and password are required'), {
-        code: 'SDK_CONFIG',
-      });
+      throw new MendError('apiEndpoint, email and password are required', ERROR_CODES.SDK_CONFIG);
     }
 
     this.apiEndpoint = opts.apiEndpoint.replace(/\/$/, '');
@@ -83,7 +79,7 @@ export class MendSdk {
   /* ------------------------------------------------------------------------------------------ */
 
   private async authenticate(): Promise<void> {
-    const res = await this.fetch<Json>(
+    const res = await this.fetch<Json<any>>(
       'POST',
       '/session',
       {
@@ -105,15 +101,13 @@ export class MendSdk {
       return;
     }
 
-    throw Object.assign(new Error('JWT not returned by /session'), { code: 'AUTH_MISSING_TOKEN' });
+    throw new MendError('JWT not returned by /session', ERROR_CODES.AUTH_MISSING_TOKEN);
   }
 
-  private async completeLogin(res: Json): Promise<void> {
+  private async completeLogin(res: Json<any>): Promise<void> {
     const token = (res as any).token as string | undefined;
     if (!token) {
-      throw Object.assign(new Error('JWT not returned by /session'), {
-        code: 'AUTH_MISSING_TOKEN',
-      });
+      throw new MendError('JWT not returned by /session', ERROR_CODES.AUTH_MISSING_TOKEN);
     }
 
     this.jwt = token;
@@ -151,7 +145,7 @@ export class MendSdk {
   /* Low‑level request helper                                                                   */
   /* ------------------------------------------------------------------------------------------ */
 
-  private async fetch<T = Json>(
+  private async fetch<T = Json<any>>(
     method: HttpVerb,
     path: string,
     body?: unknown,
@@ -186,11 +180,7 @@ export class MendSdk {
 
     /* Error handling ------------------------------------------------------------------------*/
     if (!resp.ok) {
-      const err: MendError = Object.assign(new Error(`HTTP ${resp.status} – ${resp.statusText}`), {
-        code: 'HTTP_ERROR',
-        status: resp.status,
-      });
-      throw err;
+      throw new MendError(`HTTP ${resp.status} – ${resp.statusText}`, ERROR_CODES.HTTP_ERROR, resp.status);
     }
 
     /* Some endpoints return empty body (204).  Attempt JSON parse only when content exists. */
@@ -211,7 +201,7 @@ export class MendSdk {
    * // ctrl.abort();
    * ```
    */
-  public async request<T = Json>(
+  public async request<T = Json<any>>(
     method: HttpVerb,
     path: string,
     body?: unknown,
@@ -225,80 +215,74 @@ export class MendSdk {
   /* Sample convenience wrappers – extend as required                                          */
   /* ------------------------------------------------------------------------------------------ */
 
-  public getOrg(orgId: number, signal?: AbortSignal) {
-    return this.request<Json>('GET', `/org/${orgId}`, undefined, undefined, signal);
+  public async getOrg<T = Json<any>>(orgId: number, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', `/org/${orgId}`, undefined, undefined, signal);
   }
 
-  public getUser(userId: number, signal?: AbortSignal) {
-    return this.request<Json>('GET', `/user/${userId}`, undefined, undefined, signal);
+  public async getUser<T = Json<any>>(userId: number, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', `/user/${userId}`, undefined, undefined, signal);
   }
 
-  public searchPatients(
+  public async searchPatients<T = Json<any>>(
     query: Record<string, string | number | boolean> = {},
     signal?: AbortSignal,
-  ) {
-    return this.request<Json>('GET', '/patient', undefined, query, signal);
+  ): Promise<T> {
+    return this.request<T>('GET', '/patient', undefined, query, signal);
   }
 
-  public getPatient(id: number, signal?: AbortSignal) {
-    return this.request<Json>('GET', `/patient/${id}`, undefined, undefined, signal);
+  public async getPatient<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', `/patient/${id}`, undefined, undefined, signal);
   }
 
-  public getPatientAssessmentScores(id: number, signal?: AbortSignal) {
-    return this.request<Json>(
-      'GET',
-      `/patient/${id}/assessment-scores`,
-      undefined,
-      undefined,
-      signal,
-    );
+  public async getPatientAssessmentScores<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', `/patient/${id}/assessment-scores`, undefined, undefined, signal);
   }
 
-  public createPatient(payload: Json, force = false, signal?: AbortSignal) {
+  public async createPatient<T = Json<any>>(payload: Json<any>, force = false, signal?: AbortSignal): Promise<T> {
     const path = force ? '/patient/force' : '/patient';
-    return this.request<Json>('POST', path, payload, undefined, signal);
+    return this.request<T>('POST', path, payload, undefined, signal);
   }
 
-  public updatePatient(id: number, payload: Json, force = false, signal?: AbortSignal) {
+  public async updatePatient<T = Json<any>>(id: number, payload: Json<any>, force = false, signal?: AbortSignal): Promise<T> {
     const path = force ? `/patient/${id}/force` : `/patient/${id}`;
-    return this.request<Json>('PUT', path, payload, undefined, signal);
+    return this.request<T>('PUT', path, payload, undefined, signal);
   }
 
-  public deletePatient(id: number, signal?: AbortSignal) {
-    return this.request<Json>('DELETE', `/patient/${id}`, undefined, undefined, signal);
+  public async deletePatient<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('DELETE', `/patient/${id}`, undefined, undefined, signal);
   }
 
-  public getAppointment(appointmentId: number, signal?: AbortSignal) {
-    return this.request<Json>('GET', `/appointment/${appointmentId}`, undefined, undefined, signal);
+  public async getAppointment<T = Json<any>>(appointmentId: number, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', `/appointment/${appointmentId}`, undefined, undefined, signal);
   }
 
-  public createAppointment(payload: Json, signal?: AbortSignal) {
-    return this.request<Json>('POST', '/appointment', payload, undefined, signal);
+  public async createAppointment<T = Json<any>>(payload: Json<any>, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('POST', '/appointment', payload, undefined, signal);
   }
 
-  public listOrgs(signal?: AbortSignal) {
-    return this.request<Json>('GET', '/org', undefined, undefined, signal);
+  public async listOrgs<T = Json<any>>(signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', '/org', undefined, undefined, signal);
   }
 
   /**
    * Provide a 6‑digit MFA code after calling {@link authenticate}.
    */
   public async submitMfaCode(code: string | number, signal?: AbortSignal): Promise<void> {
-    const res = await this.fetch<Json>('PUT', '/session/mfa', { mfaCode: code }, {}, true, signal);
+    const res = await this.fetch<Json<any>>('PUT', '/session/mfa', { mfaCode: code }, {}, true, signal);
     await this.completeLogin(res);
   }
 
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
-    await this.request<Json>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+    await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
     this.activeOrgId = orgId;
   }
 
-  public async getProperties(signal?: AbortSignal) {
-    return this.request<Json>('GET', '/property', undefined, undefined, signal);
+  public async getProperties<T = Json<any>>(signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', '/property', undefined, undefined, signal);
   }
 
-  public async getProperty(key: string, signal?: AbortSignal) {
-    const props = await this.getProperties(signal);
+  public async getProperty<T = Json<any>>(key: string, signal?: AbortSignal): Promise<T> {
+    const props = await this.getProperties<T>(signal);
     return (props as any)?.payload?.properties?.[key];
   }
 }

@@ -37,26 +37,38 @@
     "format": "prettier --write . --ignore-path .prettierignore",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build && npm test",
-    "test": "vitest --run"
+    "test": "vitest --run --coverage",
+    "test:coverage": "vitest --run --coverage"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --max-warnings 0",
+      "prettier --write",
+      "tsc-files --noEmit"
+    ],
+    "*.{js,json,md}": [
+      "prettier --write"
+    ]
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.6",
+    "@testing-library/dom": "^9.3.0",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
+    "@vitest/coverage-istanbul": "1.6.1",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "husky": "^9.0.11",
+    "jsdom": "^24.0.0",
     "lint-staged": "^15.2.2",
+    "msw": "^2.2.0",
     "prettier": "^3.2.5",
     "rollup": "^3.29.4",
     "rollup-plugin-terser": "^7.0.2",
+    "tsc-files": "^1.1.4",
     "tslib": "^2.6.2",
     "typescript": "^5.4.5",
-    "vitest": "1.6.1",
-    "@vitest/coverage-istanbul": "1.6.1",
-    "jsdom": "^24.0.0",
-    "@testing-library/dom": "^9.3.0",
-    "msw": "^2.2.0"
+    "vitest": "1.6.1"
   }
 }
