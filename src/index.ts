@@ -8,6 +8,8 @@
 //   `@mend/sdk/react` later if you wish.
 // ---------------------------------------------------------------------------
 import { MendError, ERROR_CODES } from './errors';
+import { HttpClient, HttpVerb, Json, createHttpClient } from './http';
+import { Mutex } from './mutex';
 
 /* ------------------------------------------------------------------------------------------------
  * Public Types
@@ -31,28 +33,20 @@ export interface MendSdkOptions {
 
 // Re-export MendError for consumers
 export { MendError, ERROR_CODES } from './errors';
-
-/* ------------------------------------------------------------------------------------------------
- * Internal Types
- * ----------------------------------------------------------------------------------------------*/
-
-// Enhanced Json type with generics
-interface Json<T = unknown> extends Record<string, T> {}
-
-type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export { Json } from './http';
 
 /* ------------------------------------------------------------------------------------------------
  * Main SDK Class
  * ----------------------------------------------------------------------------------------------*/
 
 export class MendSdk {
-  private readonly apiEndpoint: string;
+  private readonly httpClient: HttpClient;
   private readonly email: string;
   private readonly password: string;
   private readonly orgId?: number;
   private readonly mfaCode?: string | number;
   private readonly tokenTTL: number;
-  private readonly defaultHeaders: Record<string, string>;
+  private readonly authMutex = new Mutex();
 
   private activeOrgId: number | null = null;
   private availableOrgs: Json<any>[] | null = null;
@@ -65,13 +59,16 @@ export class MendSdk {
       throw new MendError('apiEndpoint, email and password are required', ERROR_CODES.SDK_CONFIG);
     }
 
-    this.apiEndpoint = opts.apiEndpoint.replace(/\/$/, '');
+    this.httpClient = createHttpClient({
+      apiEndpoint: opts.apiEndpoint,
+      defaultHeaders: opts.defaultHeaders,
+    });
+    
     this.email = opts.email;
     this.password = opts.password;
     this.orgId = opts.orgId;
     this.mfaCode = opts.mfaCode;
     this.tokenTTL = opts.tokenTTL ?? 55;
-    this.defaultHeaders = opts.defaultHeaders ?? {};
   }
 
   /* ------------------------------------------------------------------------------------------ */
@@ -79,7 +76,7 @@ export class MendSdk {
   /* ------------------------------------------------------------------------------------------ */
 
   private async authenticate(): Promise<void> {
-    const res = await this.fetch<Json<any>>(
+    const res = await this.httpClient.fetch<Json<any>>(
       'POST',
       '/session',
       {
@@ -87,7 +84,7 @@ export class MendSdk {
         password: this.password,
       },
       {},
-      /* skipAuth = */ true,
+      {},
     );
 
     const token = (res as any).token as string | undefined;
@@ -136,68 +133,29 @@ export class MendSdk {
   }
 
   private async ensureAuth(): Promise<void> {
+    // Use mutex to prevent multiple concurrent authentication attempts
+  // Fast-path: token still valid → no locking required
+  if (this.jwt && Date.now() < this.jwtExpiresAt) return;
+
+   await this.authMutex.lock(async () => {
+    // Double-check in case another waiter already refreshed the token
     if (!this.jwt || Date.now() >= this.jwtExpiresAt) {
       await this.authenticate();
     }
+   });
   }
 
   /* ------------------------------------------------------------------------------------------ */
-  /* Low‑level request helper                                                                   */
-  /* ------------------------------------------------------------------------------------------ */
-
-  private async fetch<T = Json<any>>(
-    method: HttpVerb,
-    path: string,
-    body?: unknown,
-    query: Record<string, string | number | boolean> = {},
-    skipAuth = false,
-    signal?: AbortSignal,
-  ): Promise<T> {
-    if (!skipAuth) await this.ensureAuth();
-
-    /* Query‑string ------------------------------------------------------------------------- */
-    const qs = Object.keys(query).length
-      ? '?' + new URLSearchParams(query as Record<string, string>).toString()
-      : '';
-
-    const url = this.apiEndpoint + path + qs;
-
-    /* Headers --------------------------------------------------------------------------------*/
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...this.defaultHeaders,
-    };
-    if (!skipAuth && this.jwt) headers['X-Access-Token'] = this.jwt;
-
-    /* Fetch call ----------------------------------------------------------------------------*/
-    const resp = await fetch(url, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal,
-    });
-
-    /* Error handling ------------------------------------------------------------------------*/
-    if (!resp.ok) {
-      throw new MendError(`HTTP ${resp.status} – ${resp.statusText}`, ERROR_CODES.HTTP_ERROR, resp.status);
-    }
-
-    /* Some endpoints return empty body (204).  Attempt JSON parse only when content exists. */
-    const text = await resp.text();
-    return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
-  }
-
-  /* ------------------------------------------------------------------------------------------ */
-  /* Public generic request that callers may use directly                                      */
+  /* API Request Methods                                                                       */
   /* ------------------------------------------------------------------------------------------ */
 
   /**
-   * Perform an authenticated request (abort‑able).
-   * @example
+   * Make a request to the API with authentication handling
+   * 
    * ```ts
+   * const response = await sdk.request('GET', '/user/me');
    * const ctrl = new AbortController();
-   * sdk.request('GET', '/org/2', undefined, {}, ctrl.signal);
+   * const response2 = await sdk.request('GET', '/patients', null, {}, ctrl.signal);
    * // ctrl.abort();
    * ```
    */
@@ -208,7 +166,18 @@ export class MendSdk {
     query?: Record<string, string | number | boolean>,
     signal?: AbortSignal,
   ): Promise<T> {
-    return this.fetch<T>(method, path, body, query, false, signal);
+    await this.ensureAuth();
+    
+    const authHeaders = this.jwt ? { 'X-Access-Token': this.jwt } : {};
+    
+    return this.httpClient.fetch<T>(
+      method,
+      path,
+      body,
+      query || {},
+      authHeaders,
+      signal
+    );
   }
 
   /* ------------------------------------------------------------------------------------------ */
@@ -265,10 +234,21 @@ export class MendSdk {
   }
 
   /**
-   * Provide a 6‑digit MFA code after calling {@link authenticate}.
+   * Submit MFA code to complete authentication (when 2FA is enabled on the account)
    */
   public async submitMfaCode(code: string | number, signal?: AbortSignal): Promise<void> {
-    const res = await this.fetch<Json<any>>('PUT', '/session/mfa', { mfaCode: code }, {}, true, signal);
+    // This is a special case - we need to bypass the normal auth flow
+    const authHeaders = this.jwt ? { 'X-Access-Token': this.jwt } : {};
+    
+    const res = await this.httpClient.fetch<Json<any>>(
+      'PUT',
+      '/session/mfa',
+      { mfaCode: code },
+      {},
+      authHeaders,
+      signal
+    );
+    
     await this.completeLogin(res);
   }
 

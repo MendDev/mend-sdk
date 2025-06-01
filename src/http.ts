@@ -1,0 +1,91 @@
+import { MendError, ERROR_CODES } from './errors';
+
+/**
+ * HTTP verb types supported by the API
+ */
+export type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+/**
+ * Generic JSON response type with type parameter
+ */
+export interface Json<T = unknown> extends Record<string, T> {}
+
+/**
+ * Configuration for the HTTP client
+ */
+export interface HttpClientConfig {
+  apiEndpoint: string;
+  defaultHeaders?: Record<string, string>;
+}
+
+/**
+ * Low-level HTTP client for making API requests
+ */
+export class HttpClient {
+  private readonly apiEndpoint: string;
+  private readonly defaultHeaders: Record<string, string>;
+
+  constructor(config: HttpClientConfig) {
+    this.apiEndpoint = config.apiEndpoint.replace(/\/$/, '');
+    this.defaultHeaders = config.defaultHeaders ?? {};
+  }
+
+  /**
+   * Make an HTTP request to the API
+   * 
+   * @param method HTTP method to use
+   * @param path API path (will be appended to apiEndpoint)
+   * @param body Optional request body
+   * @param query Optional query parameters
+   * @param headers Optional additional headers
+   * @param signal Optional AbortSignal for cancellation
+   * @returns Promise resolving to the response data
+   */
+  public async fetch<T = Json<any>>(
+    method: HttpVerb,
+    path: string,
+    body?: unknown,
+    query: Record<string, string | number | boolean> = {},
+    headers: Record<string, string> = {},
+    signal?: AbortSignal,
+  ): Promise<T> {
+    /* Query‑string ------------------------------------------------------------------------- */
+    const qs = Object.keys(query).length
+      ? '?' + new URLSearchParams(query as Record<string, string>).toString()
+      : '';
+
+    const url = this.apiEndpoint + path + qs;
+
+    /* Headers --------------------------------------------------------------------------------*/
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...this.defaultHeaders,
+      ...headers,
+    };
+
+    /* Fetch call ----------------------------------------------------------------------------*/
+    const resp = await fetch(url, {
+      method,
+      headers: requestHeaders,
+      body: body ? JSON.stringify(body) : undefined,
+      signal,
+    });
+
+    /* Error handling ------------------------------------------------------------------------*/
+    if (!resp.ok) {
+      throw new MendError(`HTTP ${resp.status} – ${resp.statusText}`, ERROR_CODES.HTTP_ERROR, resp.status);
+    }
+
+    /* Some endpoints return empty body (204). Attempt JSON parse only when content exists. */
+    const text = await resp.text();
+    return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
+  }
+}
+
+/**
+ * Create a new HTTP client instance
+ */
+export function createHttpClient(config: HttpClientConfig): HttpClient {
+  return new HttpClient(config);
+}
