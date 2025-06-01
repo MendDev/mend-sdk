@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { MendSdk } from './index';
+import { MendSdk } from '../../lib/index';
 import { afterEach, beforeEach, vi } from 'vitest';
-import { HttpClient, HttpVerb } from './http';
+import { HttpClient, HttpVerb } from '../../lib/http';
 
 // Standard mock responses
 export const mockResponses = {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MendError, ERROR_CODES } from './errors';
+import { MendError, ERROR_CODES } from '../lib/errors';
 
 describe('MendError', () => {
   it('should create an error with the correct properties', () => {

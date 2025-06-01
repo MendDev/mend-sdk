@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { HttpClient, createHttpClient } from './http';
-import { MendError } from './errors';
+import { HttpClient, createHttpClient } from '../lib/http';
+import { MendError } from '../lib/errors';
 
 // Setup MSW server for testing HTTP requests
 const server = setupServer(

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { Mutex } from './mutex';
+import { Mutex } from '../lib/mutex';
 
 describe('Mutex', () => {
   it('should execute functions in sequence', async () => {

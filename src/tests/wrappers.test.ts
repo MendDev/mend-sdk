@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach, vi, beforeEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import MendSdk from './index';
+import MendSdk from '../lib/index';
 
 // Setup MSW server with dedicated handlers for wrapper tests
 const server = setupServer(
