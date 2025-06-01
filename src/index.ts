@@ -168,7 +168,13 @@ export class MendSdk {
   ): Promise<T> {
     await this.ensureAuth();
     
-    const authHeaders = this.jwt ? { 'X-Access-Token': this.jwt } : {};
+    // Initialize empty headers object as Record<string, string>
+    const authHeaders: Record<string, string> = {};
+    
+    // Only add the token if it exists
+    if (this.jwt) {
+      authHeaders['X-Access-Token'] = this.jwt;
+    }
     
     return this.httpClient.fetch<T>(
       method,
@@ -238,7 +244,13 @@ export class MendSdk {
    */
   public async submitMfaCode(code: string | number, signal?: AbortSignal): Promise<void> {
     // This is a special case - we need to bypass the normal auth flow
-    const authHeaders = this.jwt ? { 'X-Access-Token': this.jwt } : {};
+    // Initialize empty headers object as Record<string, string>
+    const authHeaders: Record<string, string> = {};
+    
+    // Only add the token if it exists
+    if (this.jwt) {
+      authHeaders['X-Access-Token'] = this.jwt;
+    }
     
     const res = await this.httpClient.fetch<Json<any>>(
       'PUT',
