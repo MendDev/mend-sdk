@@ -3,7 +3,7 @@ import { terser } from 'rollup-plugin-terser';
 import filesize from 'rollup-plugin-filesize';
 
 export default {
-  input: 'src/index.ts',
+  input: 'src/lib/index.ts',
   plugins: [typescript(), filesize()],
   output: [
     {
