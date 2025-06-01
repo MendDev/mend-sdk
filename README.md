@@ -1,5 +1,7 @@
 # Mend SDK
 
+[![CI](https://github.com/menddev/mend-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/menddev/mend-sdk/actions/workflows/ci.yml)
+
 Lightweight TypeScript SDK for Mend's API.
 
 Requires **Node.js 18+** or a global `fetch` polyfill in older Node versions. In browsers, it works in modern environments that support `fetch`.
