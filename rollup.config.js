@@ -7,17 +7,17 @@ export default {
   output: [
     {
       file: 'dist/sdk.esm.js',
-      format: 'es'
+      format: 'es',
     },
     {
       file: 'dist/sdk.cjs.js',
-      format: 'cjs'
+      format: 'cjs',
     },
     {
       file: 'dist/sdk.umd.js',
       format: 'umd',
       name: 'MendSdk',
-      plugins: [terser()]
-    }
-  ]
+      plugins: [terser()],
+    },
+  ],
 };

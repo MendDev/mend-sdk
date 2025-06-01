@@ -1,0 +1,67 @@
+Below is a concrete “upgrade roadmap” you can follow one stage at a time.
+Each stage is self-contained, keeps the repo green, and unblocks the next.
+
+Stage 0 Baseline safety net ‒ Ensure current build passes and tag a branch (e.g. baseline/1.0.0).
+‒ npm ci && npm run build should succeed in CI before moving on.
+
+Stage 1 Tooling & style (30 min)
+
+npm i -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin prettier eslint-config-prettier eslint-plugin-import
+Add .eslintrc.cjs and .prettierrc.
+npm set-script lint "eslint 'src/**/*.ts' --max-warnings 0"
+npm set-script format "prettier --write ."
+npm i -D husky lint-staged && npx husky install
+npx husky add .husky/pre-commit "npm run lint && npm run format -- --check && npm run typecheck"
+
+
+
+Stage 2 CI automation (15 min)
+
+Create .github/workflows/ci.yml that runs:
+npm ci → npm run lint → npm run typecheck → npm test → npm run build
+Add workflow badge to README.md.
+
+
+
+Stage 3 Testing foundation (45 min)
+
+npm i -D vitest @vitest/coverage-istanbul jsdom @testing-library/dom msw
+Add npm set-script test "vitest --run"
+Write one happy-path test for authenticate() using msw to stub /session.
+Configure coverage threshold (60 % to start).
+
+
+
+Stage 4 Error & type improvements (45 min)
+
+Introduce src/errors.ts with the MendError class.
+Replace every Object.assign(new Error…) with throw new MendError(...).
+Strengthen Json and add generics to public methods.
+npm run typecheck (lint-stage will now guard this).
+
+
+
+Stage 5 Internal refactor (60 min)
+
+Move low-level fetch helper to src/http.ts; keep MendSdk lean.
+Add mutex in ensureAuth (e.g. p-limit or a simple Promise lock) to avoid token races.
+Run tests & fix breakages.
+
+
+
+Stage 6 Build & bundle polish (20 min)
+
+npm i -D rollup-plugin-terser
+Update rollup.config.js to apply terser() to all outputs.
+Optionally add files: ['dist/', 'README.md', 'LICENSE'] in package.json.
+Add npm run size with rollup-plugin-filesize to track bundle size.
+
+
+
+Stage 7 Docs & release hygiene (30 min)
+
+Flesh out README (quick start, link to API docs, badge list).
+Add CHANGELOG.md (or set up Changesets).
+Tag v1.1.0 once CI is green.
+Total effort: ≈ 3–4 hours.
+At any point you can publish a patch release because each stage keeps the repo passing CI.
