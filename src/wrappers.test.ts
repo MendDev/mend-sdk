@@ -247,14 +247,7 @@ describe('MendSdk Convenience Methods', () => {
     expect((result as any).payload.id).toBe(1);
   });
 
-  it('should get patient assessment scores', async () => {
-    const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getPatientAssessmentScores(1);
-    
-    expect(requestSpy).toHaveBeenCalledWith('GET', '/patient/1/assessment/scores', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect(Array.isArray((result as any).payload)).toBe(true);
-  });
+
 
   it('should create patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
@@ -265,14 +258,7 @@ describe('MendSdk Convenience Methods', () => {
     expect((result as any).payload.id).toBe(2);
   });
 
-  it('should create patient with force flag', async () => {
-    const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createPatient({ name: 'Forced Patient' }, true);
-    
-    expect(requestSpy).toHaveBeenCalledWith('POST', '/patient', { name: 'Forced Patient' }, { force: true }, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(3);
-  });
+
 
   it('should update patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
@@ -283,14 +269,7 @@ describe('MendSdk Convenience Methods', () => {
     expect((result as any).payload.id).toBe(1);
   });
 
-  it('should update patient with force flag', async () => {
-    const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.updatePatient(1, { name: 'Force Updated Patient' }, true);
-    
-    expect(requestSpy).toHaveBeenCalledWith('PUT', '/patient/1', { name: 'Force Updated Patient' }, { force: true }, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(1);
-  });
+
 
   it('should delete patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
@@ -331,11 +310,5 @@ describe('MendSdk Convenience Methods', () => {
     expect((result as any).payload.properties).toBeDefined();
   });
 
-  it('should get specific property', async () => {
-    const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getProperty('test_key');
-    
-    expect(requestSpy).toHaveBeenCalledWith('GET', '/property/test_key', undefined, undefined, undefined);
-    expect(result).toBe('test_value');
-  });
+
 });

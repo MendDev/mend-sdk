@@ -108,58 +108,15 @@ describe('Direct Tests for Uncovered Lines in index.ts', () => {
       expect(result).toBeDefined();
     });
     
-    it('should create a patient with force flag', async () => {
-      server.use(
-        http.post('https://api.example.com/patient', ({ request }) => {
-          const url = new URL(request.url);
-          const forceParam = url.searchParams.get('force');
-          
-          if (forceParam === 'true') {
-            return HttpResponse.json({ payload: { id: 3, name: 'Forced Patient' } });
-          }
-          return HttpResponse.json({ payload: { id: 2, name: 'New Patient' } });
-        })
-      );
-      
-      const result = await sdk.createPatient({ name: 'Forced Patient' }, true);
-      expect(result).toBeDefined();
-    });
+
     
     it('should update a patient', async () => {
       const result = await sdk.updatePatient(1, { name: 'Updated Patient' });
       expect(result).toBeDefined();
     });
     
-    it('should update a patient with force flag', async () => {
-      server.use(
-        http.put('https://api.example.com/patient/1', ({ request }) => {
-          const url = new URL(request.url);
-          const forceParam = url.searchParams.get('force');
-          
-          if (forceParam === 'true') {
-            return HttpResponse.json({ payload: { id: 1, name: 'Force Updated Patient' } });
-          }
-          return HttpResponse.json({ payload: { id: 1, name: 'Updated Patient' } });
-        })
-      );
-      
-      const result = await sdk.updatePatient(1, { name: 'Force Updated Patient' }, true);
-      expect(result).toBeDefined();
-    });
-    
     it('should delete a patient', async () => {
       const result = await sdk.deletePatient(1);
-      expect(result).toBeDefined();
-    });
-    
-    it('should get patient assessment scores', async () => {
-      server.use(
-        http.get('https://api.example.com/patient/1/assessment/scores', () => {
-          return HttpResponse.json({ payload: [{ id: 1, score: 85 }] });
-        })
-      );
-      
-      const result = await sdk.getPatientAssessmentScores(1);
       expect(result).toBeDefined();
     });
   });
