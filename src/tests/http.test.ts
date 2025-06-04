@@ -25,7 +25,16 @@ const server = setupServer(
   // Handler for testing query parameters
   http.get('https://api.example.com/query', ({ request }) => {
     const url = new URL(request.url);
-    return HttpResponse.json({ params: Object.fromEntries(url.searchParams) });
+    const params: Record<string, string | string[]> = {};
+    url.searchParams.forEach((v, k) => {
+      const existing = params[k];
+      if (existing) {
+        params[k] = Array.isArray(existing) ? [...existing, v] : [existing, v];
+      } else {
+        params[k] = v;
+      }
+    });
+    return HttpResponse.json({ params });
   }),
   
   // Handler for testing headers
@@ -96,6 +105,18 @@ describe('HttpClient', () => {
         limit: '10',
         search: 'test query'
       } 
+    });
+  });
+
+  it('should serialize array query params', async () => {
+    const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
+    const query = { tag: ['a', 'b'] };
+
+    const response = await client.fetch('GET', '/query', undefined, query);
+    expect(response).toEqual({
+      params: {
+        tag: ['a', 'b']
+      }
     });
   });
   

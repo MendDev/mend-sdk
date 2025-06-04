@@ -8,8 +8,9 @@
 //   `@mend/sdk/react` later if you wish.
 // ---------------------------------------------------------------------------
 import { MendError, ERROR_CODES } from './errors';
-import { HttpClient, HttpVerb, Json, createHttpClient } from './http';
+import { HttpClient, HttpVerb, Json, QueryParams, createHttpClient } from './http';
 import { Mutex } from './mutex';
+import { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
 
 /* ------------------------------------------------------------------------------------------------
  * Public Types
@@ -33,7 +34,8 @@ export interface MendSdkOptions {
 
 // Re-export MendError for consumers
 export { MendError, ERROR_CODES } from './errors';
-export { Json } from './http';
+export { Json, QueryParams } from './http';
+export type { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
 
 /* ------------------------------------------------------------------------------------------------
  * Main SDK Class
@@ -76,7 +78,7 @@ export class MendSdk {
   /* ------------------------------------------------------------------------------------------ */
 
   private async authenticate(): Promise<void> {
-    const res = await this.httpClient.fetch<Json<any>>(
+    const res = await this.httpClient.fetch<AuthResponse>(
       'POST',
       '/session',
       {
@@ -87,7 +89,7 @@ export class MendSdk {
       {},
     );
 
-    const token = (res as any).token as string | undefined;
+    const token = res.token;
     if (token) {
       await this.completeLogin(res);
       return;
@@ -101,8 +103,8 @@ export class MendSdk {
     throw new MendError('JWT not returned by /session', ERROR_CODES.AUTH_MISSING_TOKEN);
   }
 
-  private async completeLogin(res: Json<any>): Promise<void> {
-    const token = (res as any).token as string | undefined;
+  private async completeLogin(res: AuthResponse): Promise<void> {
+    const token = res.token;
     if (!token) {
       throw new MendError('JWT not returned by /session', ERROR_CODES.AUTH_MISSING_TOKEN);
     }
@@ -110,7 +112,7 @@ export class MendSdk {
     this.jwt = token;
     this.jwtExpiresAt = Date.now() + this.tokenTTL * 60_000;
 
-    const payload = (res as any)?.payload;
+    const payload = res.payload;
     if (Array.isArray(payload?.orgs)) {
       this.availableOrgs = payload.orgs;
     }
@@ -119,14 +121,12 @@ export class MendSdk {
       await this.switchOrg(this.orgId);
     } else {
       if (!this.availableOrgs) {
-        const orgs = await this.listOrgs();
-        this.availableOrgs = Array.isArray(orgs?.payload)
-          ? (orgs as any).payload
-          : (orgs as any)?.payload?.orgs;
+        const orgs = await this.listOrgs<ListOrgsResponse>();
+        this.availableOrgs = orgs.payload.orgs;
       }
       if (Array.isArray(this.availableOrgs) && this.availableOrgs.length === 1) {
-        const first = this.availableOrgs[0];
-        const id = (first as any).id ?? (first as any).orgId;
+        const first = this.availableOrgs[0] as Org;
+        const id = first.id ?? first.orgId;
         if (id) await this.switchOrg(id);
       }
     }
@@ -163,7 +163,7 @@ export class MendSdk {
     method: HttpVerb,
     path: string,
     body?: unknown,
-    query?: Record<string, string | number | boolean>,
+    query?: QueryParams,
     signal?: AbortSignal,
   ): Promise<T> {
     await this.ensureAuth();
@@ -199,7 +199,7 @@ export class MendSdk {
   }
 
   public async searchPatients<T = Json<any>>(
-    query: Record<string, string | number | boolean> = {},
+    query: QueryParams = {},
     signal?: AbortSignal,
   ): Promise<T> {
     return this.request<T>('GET', '/patient', undefined, query, signal);
@@ -235,7 +235,7 @@ export class MendSdk {
     return this.request<T>('POST', '/appointment', payload, undefined, signal);
   }
 
-  public async listOrgs<T = Json<any>>(signal?: AbortSignal): Promise<T> {
+  public async listOrgs<T = ListOrgsResponse>(signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', '/org', undefined, undefined, signal);
   }
 
@@ -269,13 +269,13 @@ export class MendSdk {
     this.activeOrgId = orgId;
   }
 
-  public async getProperties<T = Json<any>>(signal?: AbortSignal): Promise<T> {
+  public async getProperties<T = PropertiesResponse>(signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', '/property', undefined, undefined, signal);
   }
 
-  public async getProperty<T = Json<any>>(key: string, signal?: AbortSignal): Promise<T> {
-    const props = await this.getProperties<T>(signal);
-    return (props as any)?.payload?.properties?.[key];
+  public async getProperty<T = unknown>(key: string, signal?: AbortSignal): Promise<T> {
+    const props = await this.getProperties<PropertiesResponse>(signal);
+    return props.payload.properties[key] as T;
   }
 }
 

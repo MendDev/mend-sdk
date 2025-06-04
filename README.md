@@ -133,6 +133,7 @@ export function UserCard({ id }: { id: number }) {
 - If only one organization is available the SDK will automatically switch to it.
 - All helpers return **Promises** and accept `AbortSignal` as the last argument.
 - Errors include a `.code` such as `'SDK_CONFIG'`, `'AUTH_MISSING_TOKEN'` or `'HTTP_ERROR'` so you can branch on them.
+- Common types like `Org`, `User` and `Patient` are exported for convenience.
 
 ## Patient helpers
 
