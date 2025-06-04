@@ -10,6 +10,9 @@ export type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
  */
 export interface Json<T = unknown> extends Record<string, T> {}
 
+export type QueryValue = string | number | boolean | Array<string | number | boolean>;
+export type QueryParams = Record<string, QueryValue>;
+
 /**
  * Configuration for the HTTP client
  */
@@ -30,6 +33,19 @@ export class HttpClient {
     this.defaultHeaders = config.defaultHeaders ?? {};
   }
 
+  private serializeQuery(query: QueryParams): string {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (Array.isArray(value)) {
+        for (const v of value) params.append(key, String(v));
+      } else {
+        params.append(key, String(value));
+      }
+    }
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
+  }
+
   /**
    * Make an HTTP request to the API
    * 
@@ -45,14 +61,12 @@ export class HttpClient {
     method: HttpVerb,
     path: string,
     body?: unknown,
-    query: Record<string, string | number | boolean> = {},
+    query: QueryParams = {},
     headers: Record<string, string> = {},
     signal?: AbortSignal,
   ): Promise<T> {
     /* Query‑string ------------------------------------------------------------------------- */
-    const qs = Object.keys(query).length
-      ? '?' + new URLSearchParams(query as Record<string, string>).toString()
-      : '';
+    const qs = Object.keys(query).length ? this.serializeQuery(query) : '';
 
     const url = this.apiEndpoint + path + qs;
 

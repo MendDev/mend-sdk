@@ -3,11 +3,11 @@
  */
 export class MendError extends Error {
   /** Programmatic error category */
-  code: string;
+  code: ErrorCode;
   /** HTTP status if applicable */
   status?: number;
 
-  constructor(message: string, code: string, status?: number) {
+  constructor(message: string, code: ErrorCode, status?: number) {
     super(message);
     this.name = 'MendError';
     this.code = code;
