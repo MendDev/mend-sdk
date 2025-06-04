@@ -13,6 +13,10 @@ export interface MendSdkOptions {
     tokenTTL?: number;
     /** Optional default headers passed to **every** request (apart from auth headers). */
     defaultHeaders?: Record<string, string>;
+    /** Milliseconds before a request times out (default 30000) */
+    requestTimeout?: number;
+    /** Number of times to retry a failed request (default 0) */
+    retryAttempts?: number;
 }
 export { MendError, ERROR_CODES } from './errors';
 export { Json } from './http';
@@ -23,6 +27,8 @@ export declare class MendSdk {
     private readonly orgId?;
     private readonly mfaCode?;
     private readonly tokenTTL;
+    private readonly requestTimeout;
+    private readonly retryAttempts;
     private readonly authMutex;
     private activeOrgId;
     private availableOrgs;
@@ -32,6 +38,8 @@ export declare class MendSdk {
     private authenticate;
     private completeLogin;
     private ensureAuth;
+    private delay;
+    private fetchWithRetry;
     /**
      * Make a request to the API with authentication handling
      *

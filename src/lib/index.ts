@@ -29,6 +29,10 @@ export interface MendSdkOptions {
   tokenTTL?: number;
   /** Optional default headers passed to **every** request (apart from auth headers). */
   defaultHeaders?: Record<string, string>;
+  /** Milliseconds before a request times out (default 30000) */
+  requestTimeout?: number;
+  /** Number of times to retry a failed request (default 0) */
+  retryAttempts?: number;
 }
 
 // Re-export MendError for consumers
@@ -46,6 +50,8 @@ export class MendSdk {
   private readonly orgId?: number;
   private readonly mfaCode?: string | number;
   private readonly tokenTTL: number;
+  private readonly requestTimeout: number;
+  private readonly retryAttempts: number;
   private readonly authMutex = new Mutex();
 
   private activeOrgId: number | null = null;
@@ -69,6 +75,8 @@ export class MendSdk {
     this.orgId = opts.orgId;
     this.mfaCode = opts.mfaCode;
     this.tokenTTL = opts.tokenTTL ?? 55;
+    this.requestTimeout = opts.requestTimeout ?? 30_000;
+    this.retryAttempts = opts.retryAttempts ?? 0;
   }
 
   /* ------------------------------------------------------------------------------------------ */
@@ -145,6 +153,51 @@ export class MendSdk {
    });
   }
 
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private async fetchWithRetry<T>(
+    method: HttpVerb,
+    path: string,
+    body: unknown,
+    query: Record<string, string | number | boolean>,
+    headers: Record<string, string>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    let attempt = 0;
+    while (true) {
+      const ctrl = new AbortController();
+      const timer = this.requestTimeout
+        ? setTimeout(() => ctrl.abort(), this.requestTimeout)
+        : null;
+
+      const onAbort = () => ctrl.abort();
+      if (signal) {
+        if (signal.aborted) ctrl.abort();
+        else signal.addEventListener('abort', onAbort);
+      }
+
+      try {
+        return await this.httpClient.fetch<T>(
+          method,
+          path,
+          body,
+          query,
+          headers,
+          ctrl.signal,
+        );
+      } catch (err) {
+        if (attempt >= this.retryAttempts) throw err;
+        await this.delay(2 ** attempt * 100);
+        attempt += 1;
+      } finally {
+        if (timer) clearTimeout(timer);
+        if (signal) signal.removeEventListener('abort', onAbort);
+      }
+    }
+  }
+
   /* ------------------------------------------------------------------------------------------ */
   /* API Request Methods                                                                       */
   /* ------------------------------------------------------------------------------------------ */
@@ -175,14 +228,14 @@ export class MendSdk {
     if (this.jwt) {
       authHeaders['X-Access-Token'] = this.jwt;
     }
-    
-    return this.httpClient.fetch<T>(
+
+    return this.fetchWithRetry<T>(
       method,
       path,
       body,
       query || {},
       authHeaders,
-      signal
+      signal,
     );
   }
 
