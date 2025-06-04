@@ -66,14 +66,15 @@ describe('HttpClient', () => {
   
   it('should throw MendError on failed requests', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
-    
+
     await expect(client.fetch('GET', '/error')).rejects.toThrow(MendError);
-    
+
     try {
       await client.fetch('GET', '/error');
     } catch (error) {
       expect(error).toBeInstanceOf(MendError);
       expect((error as MendError).status).toBe(400);
+      expect((error as MendError).details).toEqual({ error: 'Test error' });
     }
   });
   

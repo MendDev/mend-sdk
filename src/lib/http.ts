@@ -72,14 +72,21 @@ export class HttpClient {
       signal,
     });
 
-    /* Error handling ------------------------------------------------------------------------*/
+    /* Parse body --------------------------------------------------------------*/
+    const text = await resp.text();
+    const parsed = text ? JSON.parse(text) : undefined;
+
+    /* Error handling ----------------------------------------------------------*/
     if (!resp.ok) {
-      throw new MendError(`HTTP ${resp.status} – ${resp.statusText}`, ERROR_CODES.HTTP_ERROR, resp.status);
+      throw new MendError(
+        `HTTP ${resp.status} – ${resp.statusText}`,
+        ERROR_CODES.HTTP_ERROR,
+        resp.status,
+        parsed,
+      );
     }
 
-    /* Some endpoints return empty body (204). Attempt JSON parse only when content exists. */
-    const text = await resp.text();
-    return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
+    return parsed as T;
   }
 }
 

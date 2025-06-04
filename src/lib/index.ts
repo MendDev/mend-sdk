@@ -76,16 +76,32 @@ export class MendSdk {
   /* ------------------------------------------------------------------------------------------ */
 
   private async authenticate(): Promise<void> {
-    const res = await this.httpClient.fetch<Json<any>>(
-      'POST',
-      '/session',
-      {
-        email: this.email,
-        password: this.password,
-      },
-      {},
-      {},
-    );
+    let res: Json<any>;
+    try {
+      res = await this.httpClient.fetch<Json<any>>(
+        'POST',
+        '/session',
+        {
+          email: this.email,
+          password: this.password,
+        },
+        {},
+        {},
+      );
+    } catch (err) {
+      if (err instanceof MendError) {
+        const msg = JSON.stringify(err.details ?? '').toLowerCase();
+        if (err.status === 401 && msg.includes('mfa')) {
+          throw new MendError(
+            'MFA required',
+            ERROR_CODES.AUTH_MFA_REQUIRED,
+            err.status,
+            err.details,
+          );
+        }
+      }
+      throw err;
+    }
 
     const token = (res as any).token as string | undefined;
     if (token) {
@@ -252,21 +268,41 @@ export class MendSdk {
       authHeaders['X-Access-Token'] = this.jwt;
     }
     
-    const res = await this.httpClient.fetch<Json<any>>(
-      'PUT',
-      '/session/mfa',
-      { mfaCode: code },
-      {},
-      authHeaders,
-      signal
-    );
-    
+    let res: Json<any>;
+    try {
+      res = await this.httpClient.fetch<Json<any>>(
+        'PUT',
+        '/session/mfa',
+        { mfaCode: code },
+        {},
+        authHeaders,
+        signal
+      );
+    } catch (err) {
+      if (err instanceof MendError) {
+        throw new MendError(
+          'Invalid MFA code',
+          ERROR_CODES.AUTH_INVALID_MFA,
+          err.status,
+          err.details,
+        );
+      }
+      throw err;
+    }
+
     await this.completeLogin(res);
   }
 
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
-    await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
-    this.activeOrgId = orgId;
+    try {
+      await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+      this.activeOrgId = orgId;
+    } catch (err) {
+      if (err instanceof MendError && err.status === 404) {
+        throw new MendError('Organization not found', ERROR_CODES.ORG_NOT_FOUND, err.status, err.details);
+      }
+      throw err;
+    }
   }
 
   public async getProperties<T = Json<any>>(signal?: AbortSignal): Promise<T> {

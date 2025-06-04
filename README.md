@@ -66,6 +66,21 @@ const sdk = new MendSdk({
 await sdk.submitMfaCode('123456');
 ```
 
+### Error Codes
+
+Errors thrown by the SDK are instances of `MendError` with a `code` field and
+optional `details` from the server response.
+
+| Code | Meaning |
+| --- | --- |
+| `SDK_CONFIG` | Missing required SDK options |
+| `AUTH_MISSING_TOKEN` | Session endpoint did not return a JWT |
+| `AUTH_MFA_REQUIRED` | Login requires a multi-factor authentication code |
+| `AUTH_INVALID_MFA` | Provided MFA code was rejected |
+| `ORG_NOT_FOUND` | Organization does not exist or is inaccessible |
+| `HTTP_ERROR` | Unhandled HTTP error response |
+
+
 ### React component with abort-on-unmount
 
 ```tsx
