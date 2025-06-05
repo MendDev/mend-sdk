@@ -50,7 +50,7 @@ export class MendSdk {
   private readonly email: string;
   private readonly password: string;
   private readonly orgId?: number;
-  private readonly mfaCode?: string | number;
+  private mfaCode?: string | number;
   private readonly tokenTTL: number;
   private readonly requestTimeout: number;
   private readonly retryAttempts: number;
@@ -65,6 +65,14 @@ export class MendSdk {
   constructor(opts: MendSdkOptions) {
     if (!opts?.apiEndpoint || !opts?.email || !opts?.password) {
       throw new MendError('apiEndpoint, email and password are required', ERROR_CODES.SDK_CONFIG);
+    }
+
+    if (!/^https:\/\//i.test(opts.apiEndpoint)) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new MendError('apiEndpoint must use HTTPS in production', ERROR_CODES.SDK_CONFIG);
+      } else {
+        console.warn('Warning: using a non-HTTPS apiEndpoint');
+      }
     }
 
     this.httpClient = createHttpClient({
@@ -313,8 +321,9 @@ export class MendSdk {
       authHeaders,
       signal
     );
-    
+
     await this.completeLogin(res);
+    this.mfaCode = undefined;
   }
 
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
@@ -336,6 +345,14 @@ export class MendSdk {
   public async getProperty<T = unknown>(key: string, signal?: AbortSignal): Promise<T> {
     const props = await this.getProperties<PropertiesResponse>(signal);
     return props.payload.properties[key] as T;
+  }
+
+  /**
+   * Clear authentication state and JWTs
+   */
+  public logout(): void {
+    this.jwt = null;
+    this.jwtExpiresAt = 0;
   }
 }
 
