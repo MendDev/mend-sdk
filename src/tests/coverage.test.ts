@@ -143,7 +143,7 @@ describe('MendSdk Coverage Tests', () => {
     it('should handle request with body', async () => {
       server.use(
         http.post('https://api.example.com/test', async ({ request }) => {
-          const body = await request.json() as Record<string, any>;
+          const body = await request.json() as Record<string, unknown>;
           if (body?.test === 'value') {
             return HttpResponse.json({ success: true });
           }

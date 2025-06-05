@@ -59,7 +59,7 @@ export class MendSdk {
   private readonly authMutex = new Mutex();
 
   private activeOrgId: number | null = null;
-  private availableOrgs: Json<any>[] | null = null;
+  private availableOrgs: Json<unknown>[] | null = null;
 
   private jwt: string | null = null;
   private jwtExpiresAt = 0; // epoch ms
@@ -228,7 +228,7 @@ export class MendSdk {
    * // ctrl.abort();
    * ```
    */
-  public async request<T = Json<any>>(
+  public async request<T = Json<unknown>>(
     method: HttpVerb,
     path: string,
     body?: unknown,
@@ -270,7 +270,7 @@ export class MendSdk {
    * @param orgId - Organization ID
    * @param signal - Optional abort signal
    */
-  public async getOrg<T = Json<any>>(orgId: number, signal?: AbortSignal): Promise<T> {
+  public async getOrg<T = Json<unknown>>(orgId: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/org/${orgId}`, undefined, undefined, signal);
   }
 
@@ -280,7 +280,7 @@ export class MendSdk {
    * @param userId - User ID
    * @param signal - Optional abort signal
    */
-  public async getUser<T = Json<any>>(userId: number, signal?: AbortSignal): Promise<T> {
+  public async getUser<T = Json<unknown>>(userId: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/user/${userId}`, undefined, undefined, signal);
   }
 
@@ -290,7 +290,7 @@ export class MendSdk {
    * @param query - Search filters and paging options
    * @param signal - Optional abort signal
    */
-  public async searchPatients<T = Json<any>>(
+  public async searchPatients<T = Json<unknown>>(
     query: QueryParams = {},
     signal?: AbortSignal,
   ): Promise<T> {
@@ -303,7 +303,7 @@ export class MendSdk {
    * @param id - Patient ID
    * @param signal - Optional abort signal
    */
-  public async getPatient<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
+  public async getPatient<T = Json<unknown>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/patient/${id}`, undefined, undefined, signal);
   }
 
@@ -313,7 +313,7 @@ export class MendSdk {
    * @param id - Patient ID
    * @param signal - Optional abort signal
    */
-  public async getPatientAssessmentScores<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
+  public async getPatientAssessmentScores<T = Json<unknown>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/patient/${id}/assessment-scores`, undefined, undefined, signal);
   }
 
@@ -324,7 +324,7 @@ export class MendSdk {
    * @param force - Bypass age or validation checks
    * @param signal - Optional abort signal
    */
-  public async createPatient<T = Json<any>>(payload: Json<any>, force = false, signal?: AbortSignal): Promise<T> {
+  public async createPatient<T = Json<unknown>>(payload: Json<unknown>, force = false, signal?: AbortSignal): Promise<T> {
     const path = force ? '/patient/force' : '/patient';
     return this.request<T>('POST', path, payload, undefined, signal);
   }
@@ -337,7 +337,7 @@ export class MendSdk {
    * @param force - Ignore update limits
    * @param signal - Optional abort signal
    */
-  public async updatePatient<T = Json<any>>(id: number, payload: Json<any>, force = false, signal?: AbortSignal): Promise<T> {
+  public async updatePatient<T = Json<unknown>>(id: number, payload: Json<unknown>, force = false, signal?: AbortSignal): Promise<T> {
     const path = force ? `/patient/${id}/force` : `/patient/${id}`;
     return this.request<T>('PUT', path, payload, undefined, signal);
   }
@@ -348,7 +348,7 @@ export class MendSdk {
    * @param id - Patient ID
    * @param signal - Optional abort signal
    */
-  public async deletePatient<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
+  public async deletePatient<T = Json<unknown>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('DELETE', `/patient/${id}`, undefined, undefined, signal);
   }
 
@@ -358,7 +358,7 @@ export class MendSdk {
    * @param appointmentId - Appointment ID
    * @param signal - Optional abort signal
    */
-  public async getAppointment<T = Json<any>>(appointmentId: number, signal?: AbortSignal): Promise<T> {
+  public async getAppointment<T = Json<unknown>>(appointmentId: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/appointment/${appointmentId}`, undefined, undefined, signal);
   }
 
@@ -368,7 +368,7 @@ export class MendSdk {
    * @param payload - Appointment details
    * @param signal - Optional abort signal
    */
-  public async createAppointment<T = Json<any>>(payload: Json<any>, signal?: AbortSignal): Promise<T> {
+  public async createAppointment<T = Json<unknown>>(payload: Json<unknown>, signal?: AbortSignal): Promise<T> {
     return this.request<T>('POST', '/appointment', payload, undefined, signal);
   }
 
@@ -388,7 +388,7 @@ export class MendSdk {
     // This bypasses ensureAuth, but still needs the current token if available
     const authHeaders = this.buildAuthHeaders();
     
-    const res = await this.httpClient.fetch<Json<any>>(
+    const res = await this.httpClient.fetch<Json<unknown>>(
       'PUT',
       '/session/mfa',
       { mfaCode: code },
@@ -409,7 +409,7 @@ export class MendSdk {
    */
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
     try {
-      await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+      await this.request<Json<unknown>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
       this.activeOrgId = orgId;
     } catch (err) {
       if (err instanceof MendError && err.status === 404) {

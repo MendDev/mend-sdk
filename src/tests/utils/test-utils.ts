@@ -171,7 +171,7 @@ export function setupMswServer(additionalHandlers: any[] = []) {
     }),
     
     http.post('*/patient', async ({ request }) => {
-      const body = await request.json().catch(() => ({})) as Record<string, any>;
+      const body = await request.json().catch(() => ({})) as Record<string, unknown>;
       return HttpResponse.json({
         status: 'success',
         patient: { id: 3, ...body }
@@ -180,7 +180,7 @@ export function setupMswServer(additionalHandlers: any[] = []) {
     
     http.put('*/patient/:id', async ({ params, request }) => {
       const { id } = params;
-      const body = await request.json().catch(() => ({})) as Record<string, any>;
+      const body = await request.json().catch(() => ({})) as Record<string, unknown>;
       return HttpResponse.json({
         status: 'success',
         patient: { id: Number(id), ...body }
@@ -263,7 +263,7 @@ export function setupMswServer(additionalHandlers: any[] = []) {
     }),
     
     http.post('*/appointment', async ({ request }) => {
-      const body = await request.json().catch(() => ({})) as Record<string, any>;
+      const body = await request.json().catch(() => ({})) as Record<string, unknown>;
       return HttpResponse.json({
         status: 'success',
         appointment: { id: 1, ...body }

@@ -49,7 +49,7 @@ const server = setupServer(
     return HttpResponse.json({ payload: [] });
   }),
   http.post('https://api.example.com/patient', async ({ request }) => {
-    const body = await request.json() as Record<string, any>;
+    const body = await request.json() as Record<string, unknown>;
     const url = new URL(request.url);
     const forceParam = url.searchParams.get('force');
     
@@ -60,12 +60,12 @@ const server = setupServer(
   }),
   // Force create patient path
   http.post('https://api.example.com/patient/force', async ({ request }) => {
-    const body = await request.json() as Record<string, any>;
+    const body = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: 3, name: body.name, force: true } });
   }),
   http.put('https://api.example.com/patient/:patientId', async ({ request, params }) => {
     const { patientId } = params;
-    const body = await request.json() as Record<string, any>;
+    const body = await request.json() as Record<string, unknown>;
     const url = new URL(request.url);
     const forceParam = url.searchParams.get('force');
     
@@ -77,7 +77,7 @@ const server = setupServer(
   // Force update patient path
   http.put('https://api.example.com/patient/:patientId/force', async ({ request, params }) => {
     const { patientId } = params;
-    const body = await request.json() as Record<string, any>;
+    const body = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: Number(patientId), name: body.name, force: true } });
   }),
   http.delete('https://api.example.com/patient/:patientId', ({ params }) => {
@@ -91,7 +91,7 @@ const server = setupServer(
     return HttpResponse.json({ payload: { id: Number(appointmentId), patient_id: 1, time: '2025-06-01T15:00:00Z' } });
   }),
   http.post('https://api.example.com/appointment', async ({ request }) => {
-    const body = await request.json() as Record<string, any>;
+    const body = await request.json() as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: 2, patient_id: body.patient_id, time: body.time } });
   }),
   
@@ -109,7 +109,7 @@ const server = setupServer(
   
   // Test endpoint for request method tests
   http.post('https://api.example.com/test-endpoint', async ({ request }) => {
-    const body = await request.json() as Record<string, any>;
+    const body = await request.json() as Record<string, unknown>;
     const url = new URL(request.url);
     
     if (body?.test === 'value' && url.searchParams.get('param') === 'value') {

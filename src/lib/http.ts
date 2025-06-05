@@ -57,7 +57,7 @@ export class HttpClient {
    * @param signal Optional AbortSignal for cancellation
    * @returns Promise resolving to the response data
    */
-  public async fetch<T = Json<any>>(
+  public async fetch<T = Json<unknown>>(
     method: HttpVerb,
     path: string,
     body?: unknown,
@@ -94,18 +94,19 @@ export class HttpClient {
       if (text) {
         try {
           details = JSON.parse(text);
-          const obj = details as Record<string, any>;
-          message = obj.message || obj.error || message;
+          const obj = details as Record<string, unknown>;
+          const msg = (obj.message ?? obj.error) as string | undefined;
+          message = msg || message;
         } catch {
           details = text;
           message = text;
         }
       }
 
-      const serverCode = (details as any)?.code as ErrorCode | undefined;
+      const serverCode = (details as { code?: unknown })?.code;
       let code: ErrorCode = ERROR_CODES.HTTP_ERROR;
-      if (serverCode && (serverCode in ERROR_CODES)) {
-        code = serverCode;
+      if (typeof serverCode === 'string' && serverCode in ERROR_CODES) {
+        code = serverCode as ErrorCode;
       }
 
       throw new MendError(message, code, resp.status, details);
