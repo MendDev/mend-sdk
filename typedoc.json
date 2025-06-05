@@ -1,0 +1,7 @@
+{
+  "entryPoints": ["src/lib/index.ts"],
+  "out": "docs",
+  "name": "Mend SDK",
+  "tsconfig": "tsconfig.json",
+  "includeVersion": true
+}
