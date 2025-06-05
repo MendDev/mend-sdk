@@ -20,6 +20,13 @@ describe('MendError', () => {
     expect(error.status).toBe(404);
   });
 
+  it('should attach details', () => {
+    const detail = { message: 'Bad' };
+    const error = new MendError('err', ERROR_CODES.HTTP_ERROR, 400, detail);
+
+    expect(error.details).toEqual(detail);
+  });
+
   it('should work correctly with instanceof checks', () => {
     const error = new MendError('Test error', ERROR_CODES.AUTH_MISSING_TOKEN);
     
