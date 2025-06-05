@@ -318,8 +318,15 @@ export class MendSdk {
   }
 
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
-    await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
-    this.activeOrgId = orgId;
+    try {
+      await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+      this.activeOrgId = orgId;
+    } catch (err) {
+      if (err instanceof MendError && err.status === 404) {
+        throw new MendError(err.message, ERROR_CODES.ORG_NOT_FOUND, err.status, err.details);
+      }
+      throw err;
+    }
   }
 
   public async getProperties<T = PropertiesResponse>(signal?: AbortSignal): Promise<T> {

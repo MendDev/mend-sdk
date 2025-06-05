@@ -132,10 +132,21 @@ export function UserCard({ id }: { id: number }) {
 - The first authenticated call automatically logs in and caches the JWT.
 - If only one organization is available the SDK will automatically switch to it.
 - All helpers return **Promises** and accept `AbortSignal` as the last argument.
-- Errors include a `.code` such as `'SDK_CONFIG'`, `'AUTH_MISSING_TOKEN'` or `'HTTP_ERROR'` so you can branch on them.
+- Errors include a `.code` such as `'SDK_CONFIG'`, `'AUTH_MFA_REQUIRED'` or `'ORG_NOT_FOUND'` so you can branch on them.
 - Common types like `Org`, `User` and `Patient` are exported for convenience.
 
+### Error codes
+
+| Code | Meaning |
+|------|---------|
+| SDK_CONFIG | Missing or invalid SDK options |
+| AUTH_MISSING_TOKEN | JWT not returned by the API |
+| AUTH_MFA_REQUIRED | MFA code is required to authenticate |
+| AUTH_INVALID_MFA | Provided MFA code was rejected |
+| ORG_NOT_FOUND | Organization does not exist or is not accessible |
+| HTTP_ERROR | Other server or network failure |
 ## Patient helpers
+
 
 The SDK exposes helper methods covering all `/patient` routes. Searching accepts
 any of the query parameters supported by the API (see below).

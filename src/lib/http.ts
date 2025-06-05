@@ -86,9 +86,29 @@ export class HttpClient {
       signal,
     });
 
-    /* Error handling ------------------------------------------------------------------------*/
+    /* Error handling --------------------------------------------------------------*/
     if (!resp.ok) {
-      throw new MendError(`HTTP ${resp.status} – ${resp.statusText}`, ERROR_CODES.HTTP_ERROR, resp.status);
+      const text = await resp.text();
+      let details: unknown;
+      let message = `HTTP ${resp.status} – ${resp.statusText}`;
+      if (text) {
+        try {
+          details = JSON.parse(text);
+          const obj = details as Record<string, any>;
+          message = obj.message || obj.error || message;
+        } catch {
+          details = text;
+          message = text;
+        }
+      }
+
+      const serverCode = (details as any)?.code as ErrorCode | undefined;
+      let code: ErrorCode = ERROR_CODES.HTTP_ERROR;
+      if (serverCode && (serverCode in ERROR_CODES)) {
+        code = serverCode;
+      }
+
+      throw new MendError(message, code, resp.status, details);
     }
 
     /* Some endpoints return empty body (204). Attempt JSON parse only when content exists. */

@@ -15,6 +15,15 @@ const server = setupServer(
   http.get('https://api.example.com/error', () => {
     return HttpResponse.json({ error: 'Test error' }, { status: 400 });
   }),
+
+  // Handler returning structured error with code
+  http.get('https://api.example.com/mfa', () => {
+    return HttpResponse.json({ message: 'MFA required', code: 'AUTH_MFA_REQUIRED' }, { status: 401 });
+  }),
+
+  http.put('https://api.example.com/org/999', () => {
+    return HttpResponse.json({ message: 'Org not found', code: 'ORG_NOT_FOUND' }, { status: 404 });
+  }),
   
   // Handler for testing POST requests
   http.post('https://api.example.com/submit', async ({ request }) => {
@@ -85,6 +94,18 @@ describe('HttpClient', () => {
       expect((error as MendError).status).toBe(400);
     }
   });
+
+  it('should expose error codes from JSON bodies', async () => {
+    const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
+
+    try {
+      await client.fetch('GET', '/mfa');
+    } catch (err) {
+      expect(err).toBeInstanceOf(MendError);
+      expect((err as MendError).code).toBe('AUTH_MFA_REQUIRED');
+      expect((err as MendError).details).toEqual({ message: 'MFA required', code: 'AUTH_MFA_REQUIRED' });
+    }
+  });
   
   it('should send body data with POST requests', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
@@ -141,7 +162,18 @@ describe('HttpClient', () => {
   it('should handle empty responses', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
     const response = await client.fetch('GET', '/empty');
-    
+
     expect(response).toBeUndefined();
+  });
+
+  it('should map org errors', async () => {
+    const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
+
+    try {
+      await client.fetch('PUT', '/org/999');
+    } catch (err) {
+      expect(err).toBeInstanceOf(MendError);
+      expect((err as MendError).code).toBe('ORG_NOT_FOUND');
+    }
   });
 });
