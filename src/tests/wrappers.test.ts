@@ -35,7 +35,7 @@ const server = setupServer(
     const { patientId } = params;
     return HttpResponse.json({ payload: { id: Number(patientId), name: 'Test Patient' } });
   }),
-  http.get('https://api.example.com/patient/:patientId/assessment/scores', ({ params }) => {
+  http.get('https://api.example.com/patient/:patientId/assessment-scores', ({ params }) => {
     const { patientId } = params;
     return HttpResponse.json({ payload: [{ id: 1, patient_id: Number(patientId), score: 85 }] });
   }),
@@ -150,9 +150,8 @@ describe('MendSdk Request Method', () => {
   });
 
   it('should make authenticated requests', async () => {
-    const result = await sdk.request('GET', '/user/1');
-    expect(result).toBeDefined();
-    expect((result as any).payload).toBeDefined();
+    const result = await sdk.request<{ payload: { id: number; name: string } }>('GET', '/user/1');
+    expect(result.payload.id).toBe(1);
   });
   
   it('should handle request with body and query params', async () => {
@@ -200,20 +199,18 @@ describe('MendSdk Convenience Methods', () => {
   // Organization methods
   it('should get organization details', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getOrg(1);
-    
+    const result = await sdk.getOrg<{ payload: { id: number } }>(1);
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/org/1', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(1);
+    expect(result.payload.id).toBe(1);
   });
 
   it('should list organizations', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.listOrgs();
-    
+    const result = await sdk.listOrgs<{ payload: { orgs: Array<{ id: number }> } }>();
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/org', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect(Array.isArray((result as any).payload.orgs)).toBe(true);
+    expect(Array.isArray(result.payload.orgs)).toBe(true);
   });
 
   it('should switch organization', async () => {
@@ -233,111 +230,100 @@ describe('MendSdk Convenience Methods', () => {
   // User methods
   it('should get user details', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getUser(1);
-    
+    const result = await sdk.getUser<{ payload: { id: number } }>(1);
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/user/1', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(1);
+    expect(result.payload.id).toBe(1);
   });
 
   // Patient methods
   it('should search patients', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.searchPatients({ name: 'Test' });
-    
+    const result = await sdk.searchPatients<{ payload: Array<{ id: number }> }>({ name: 'Test' });
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/patient', undefined, { name: 'Test' }, undefined);
-    expect(result).toBeDefined();
-    expect(Array.isArray((result as any).payload)).toBe(true);
+    expect(Array.isArray(result.payload)).toBe(true);
   });
 
   it('should get patient details', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getPatient(1);
-    
+    const result = await sdk.getPatient<{ payload: { id: number } }>(1);
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/patient/1', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(1);
+    expect(result.payload.id).toBe(1);
   });
 
 
 
   it('should create patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createPatient({ name: 'New Patient' });
-    
+    const result = await sdk.createPatient<{ payload: { id: number } }>({ name: 'New Patient' });
+
     expect(requestSpy).toHaveBeenCalledWith('POST', '/patient', { name: 'New Patient' }, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(2);
+    expect(result.payload.id).toBe(2);
   });
 
 
 
   it('should update patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.updatePatient(1, { name: 'Updated Patient' });
-    
+    const result = await sdk.updatePatient<{ payload: { id: number } }>(1, { name: 'Updated Patient' });
+
     expect(requestSpy).toHaveBeenCalledWith('PUT', '/patient/1', { name: 'Updated Patient' }, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(1);
+    expect(result.payload.id).toBe(1);
   });
 
 
 
   it('should delete patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.deletePatient(1);
-    
+    const result = await sdk.deletePatient<{ payload: { success: boolean } }>(1);
+
     expect(requestSpy).toHaveBeenCalledWith('DELETE', '/patient/1', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.success).toBe(true);
+    expect(result.payload.success).toBe(true);
   });
 
   // Appointment methods
   it('should get appointment', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getAppointment(1);
-    
+    const result = await sdk.getAppointment<{ payload: { id: number } }>(1);
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/appointment/1', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(1);
+    expect(result.payload.id).toBe(1);
   });
 
   it('should create appointment', async () => {
     const appointmentData = { patient_id: 1, time: '2025-06-01T15:00:00Z' };
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createAppointment(appointmentData);
-    
+    const result = await sdk.createAppointment<{ payload: { id: number } }>(appointmentData);
+
     expect(requestSpy).toHaveBeenCalledWith('POST', '/appointment', appointmentData, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.id).toBe(2);
+    expect(result.payload.id).toBe(2);
   });
 
   // Property methods
   it('should get all properties', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.getProperties();
-    
+    const result = await sdk.getProperties<{ payload: { properties: Record<string, unknown> } }>();
+
     expect(requestSpy).toHaveBeenCalledWith('GET', '/property', undefined, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.properties).toBeDefined();
+    expect(result.payload.properties).toBeDefined();
   });
 
   it('should create patient with force flag', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createPatient({ name: 'Forced Patient' }, true);
+    const result = await sdk.createPatient<{ payload: { force: boolean } }>({ name: 'Forced Patient' }, true);
 
     expect(requestSpy).toHaveBeenCalledWith('POST', '/patient/force', { name: 'Forced Patient' }, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.force).toBe(true);
+    expect(result.payload.force).toBe(true);
   });
 
   it('should update patient with force flag', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.updatePatient(1, { name: 'Forced Update' }, true);
+    const result = await sdk.updatePatient<{ payload: { force: boolean } }>(1, { name: 'Forced Update' }, true);
 
     expect(requestSpy).toHaveBeenCalledWith('PUT', '/patient/1/force', { name: 'Forced Update' }, undefined, undefined);
-    expect(result).toBeDefined();
-    expect((result as any).payload.force).toBe(true);
+    expect(result.payload.force).toBe(true);
   });
 
   it('should throw on 404 when switching organization', async () => {
