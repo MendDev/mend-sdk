@@ -27,6 +27,13 @@ describe('MendError', () => {
     expect(error.details).toEqual(detail);
   });
 
+  it('should store context information', () => {
+    const ctx = { url: 'http://x', method: 'GET', headers: { a: 'b' }, responseBody: 'oops' };
+    const error = new MendError('err', ERROR_CODES.HTTP_ERROR, undefined, undefined, ctx);
+
+    expect(error.context).toEqual(ctx);
+  });
+
   it('should work correctly with instanceof checks', () => {
     const error = new MendError('Test error', ERROR_CODES.AUTH_MISSING_TOKEN);
     

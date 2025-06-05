@@ -79,12 +79,24 @@ export class HttpClient {
     };
 
     /* Fetch call ----------------------------------------------------------------------------*/
-    const resp = await fetch(url, {
-      method,
-      headers: requestHeaders,
-      body: body ? JSON.stringify(body) : undefined,
-      signal,
-    });
+    const context = { url, method, headers: requestHeaders };
+    let resp: Response;
+    try {
+      resp = await fetch(url, {
+        method,
+        headers: requestHeaders,
+        body: body ? JSON.stringify(body) : undefined,
+        signal,
+      });
+    } catch (err) {
+      throw new MendError(
+        (err as Error).message,
+        ERROR_CODES.HTTP_ERROR,
+        undefined,
+        undefined,
+        context,
+      );
+    }
 
     /* Error handling --------------------------------------------------------------*/
     if (!resp.ok) {
@@ -108,7 +120,13 @@ export class HttpClient {
         code = serverCode;
       }
 
-      throw new MendError(message, code, resp.status, details);
+      throw new MendError(
+        message,
+        code,
+        resp.status,
+        details,
+        { ...context, responseBody: details },
+      );
     }
 
     /* Some endpoints return empty body (204). Attempt JSON parse only when content exists. */

@@ -8,13 +8,22 @@ export class MendError extends Error {
   status?: number;
   /** Parsed error body returned by the API */
   details?: unknown;
+  /** Additional metadata about the request/response */
+  context?: ErrorContext;
 
-  constructor(message: string, code: ErrorCode, status?: number, details?: unknown) {
+  constructor(
+    message: string,
+    code: ErrorCode,
+    status?: number,
+    details?: unknown,
+    context?: ErrorContext,
+  ) {
     super(message);
     this.name = 'MendError';
     this.code = code;
     this.status = status;
     this.details = details;
+    this.context = context;
     
     // Ensures proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, MendError.prototype);
@@ -40,3 +49,11 @@ export const ERROR_CODES = {
 } as const;
 
 export type ErrorCode = keyof typeof ERROR_CODES;
+
+/** Additional context about a failed request */
+export interface ErrorContext {
+  url?: string;
+  method?: string;
+  headers?: Record<string, string>;
+  responseBody?: unknown;
+}
