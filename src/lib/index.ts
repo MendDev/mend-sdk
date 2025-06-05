@@ -13,6 +13,9 @@ import { Mutex } from './mutex';
 import { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
 
 export const DEFAULT_TOKEN_TTL_MINUTES = 55;
+export const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+export const DEFAULT_RETRY_ATTEMPTS = 0;
+export const DEFAULT_RETRY_BACKOFF_MS = 100;
 
 /* ------------------------------------------------------------------------------------------------
  * Public Types
@@ -28,15 +31,15 @@ export interface MendSdkOptions {
   orgId?: number;
   /** Optional MFA code for accounts that require it */
   mfaCode?: string | number;
-  /** Minutes before JWT refresh (default 55) */
+  /** Minutes before JWT refresh (default {@link DEFAULT_TOKEN_TTL_MINUTES}) */
   tokenTTL?: number;
   /** Optional default headers passed to **every** request (apart from auth headers). */
   defaultHeaders?: Record<string, string>;
-  /** Milliseconds before a request times out (default 30000) */
+  /** Milliseconds before a request times out (default {@link DEFAULT_REQUEST_TIMEOUT_MS}) */
   requestTimeout?: number;
-  /** Number of times to retry a failed request (default 0) */
+  /** Number of times to retry a failed request (default {@link DEFAULT_RETRY_ATTEMPTS}) */
   retryAttempts?: number;
-  /** Base delay in ms for exponential backoff (default 100) */
+  /** Base delay in ms for exponential backoff (default {@link DEFAULT_RETRY_BACKOFF_MS}) */
   retryBackoff?: number;
 }
 
@@ -91,9 +94,9 @@ export class MendSdk {
     this.orgId = opts.orgId;
     this.mfaCode = opts.mfaCode;
     this.tokenTTL = opts.tokenTTL ?? DEFAULT_TOKEN_TTL_MINUTES;
-    this.requestTimeout = opts.requestTimeout ?? 30_000;
-    this.retryAttempts = opts.retryAttempts ?? 0;
-    this.retryBackoff = opts.retryBackoff ?? 100;
+    this.requestTimeout = opts.requestTimeout ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    this.retryAttempts = opts.retryAttempts ?? DEFAULT_RETRY_ATTEMPTS;
+    this.retryBackoff = opts.retryBackoff ?? DEFAULT_RETRY_BACKOFF_MS;
   }
 
   /* ------------------------------------------------------------------------------------------ */
