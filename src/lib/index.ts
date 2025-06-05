@@ -12,6 +12,8 @@ import { HttpClient, HttpVerb, Json, QueryParams, createHttpClient } from './htt
 import { Mutex } from './mutex';
 import { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
 
+export const DEFAULT_TOKEN_TTL_MINUTES = 55;
+
 /* ------------------------------------------------------------------------------------------------
  * Public Types
  * ----------------------------------------------------------------------------------------------*/
@@ -76,7 +78,7 @@ export class MendSdk {
     this.password = opts.password;
     this.orgId = opts.orgId;
     this.mfaCode = opts.mfaCode;
-    this.tokenTTL = opts.tokenTTL ?? 55;
+    this.tokenTTL = opts.tokenTTL ?? DEFAULT_TOKEN_TTL_MINUTES;
     this.requestTimeout = opts.requestTimeout ?? 30_000;
     this.retryAttempts = opts.retryAttempts ?? 0;
   }
@@ -157,6 +159,12 @@ export class MendSdk {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  private buildAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (this.jwt) headers['X-Access-Token'] = this.jwt;
+    return headers;
+  }
+
   private async fetchWithRetry<T>(
     method: HttpVerb,
     path: string,
@@ -220,23 +228,28 @@ export class MendSdk {
     signal?: AbortSignal,
   ): Promise<T> {
     await this.ensureAuth();
-    
-    // Initialize empty headers object as Record<string, string>
-    const authHeaders: Record<string, string> = {};
-    
-    // Only add the token if it exists
-    if (this.jwt) {
-      authHeaders['X-Access-Token'] = this.jwt;
-    }
 
-    return this.fetchWithRetry<T>(
-      method,
-      path,
-      body,
-      query || {},
-      authHeaders,
-      signal,
-    );
+    const doRequest = async () =>
+      this.fetchWithRetry<T>(
+        method,
+        path,
+        body,
+        query || {},
+        this.buildAuthHeaders(),
+        signal,
+      );
+
+    try {
+      return await doRequest();
+    } catch (err) {
+      if (err instanceof MendError && err.status === 401) {
+        this.jwt = null;
+        this.jwtExpiresAt = 0;
+        await this.ensureAuth();
+        return doRequest();
+      }
+      throw err;
+    }
   }
 
   /* ------------------------------------------------------------------------------------------ */
@@ -296,14 +309,8 @@ export class MendSdk {
    * Submit MFA code to complete authentication (when 2FA is enabled on the account)
    */
   public async submitMfaCode(code: string | number, signal?: AbortSignal): Promise<void> {
-    // This is a special case - we need to bypass the normal auth flow
-    // Initialize empty headers object as Record<string, string>
-    const authHeaders: Record<string, string> = {};
-    
-    // Only add the token if it exists
-    if (this.jwt) {
-      authHeaders['X-Access-Token'] = this.jwt;
-    }
+    // This bypasses ensureAuth, but still needs the current token if available
+    const authHeaders = this.buildAuthHeaders();
     
     const res = await this.httpClient.fetch<Json<any>>(
       'PUT',
