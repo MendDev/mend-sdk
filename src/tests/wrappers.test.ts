@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi, beforeEach } 
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import MendSdk from '../lib/index';
+import { MendError, ERROR_CODES } from '../lib/errors';
 
 // Setup MSW server with dedicated handlers for wrapper tests
 const server = setupServer(
@@ -57,6 +58,11 @@ const server = setupServer(
     }
     return HttpResponse.json({ payload: { id: 2, name: body.name } });
   }),
+  // Force create patient path
+  http.post('https://api.example.com/patient/force', async ({ request }) => {
+    const body = await request.json() as Record<string, any>;
+    return HttpResponse.json({ payload: { id: 3, name: body.name, force: true } });
+  }),
   http.put('https://api.example.com/patient/:patientId', async ({ request, params }) => {
     const { patientId } = params;
     const body = await request.json() as Record<string, any>;
@@ -67,6 +73,12 @@ const server = setupServer(
       return HttpResponse.json({ payload: { id: Number(patientId), name: body.name, force: true } });
     }
     return HttpResponse.json({ payload: { id: Number(patientId), name: body.name } });
+  }),
+  // Force update patient path
+  http.put('https://api.example.com/patient/:patientId/force', async ({ request, params }) => {
+    const { patientId } = params;
+    const body = await request.json() as Record<string, any>;
+    return HttpResponse.json({ payload: { id: Number(patientId), name: body.name, force: true } });
   }),
   http.delete('https://api.example.com/patient/:patientId', ({ params }) => {
     const { patientId } = params;
@@ -308,6 +320,35 @@ describe('MendSdk Convenience Methods', () => {
     expect(requestSpy).toHaveBeenCalledWith('GET', '/property', undefined, undefined, undefined);
     expect(result).toBeDefined();
     expect((result as any).payload.properties).toBeDefined();
+  });
+
+  it('should create patient with force flag', async () => {
+    const requestSpy = vi.spyOn(sdk, 'request' as any);
+    const result = await sdk.createPatient({ name: 'Forced Patient' }, true);
+
+    expect(requestSpy).toHaveBeenCalledWith('POST', '/patient/force', { name: 'Forced Patient' }, undefined, undefined);
+    expect(result).toBeDefined();
+    expect((result as any).payload.force).toBe(true);
+  });
+
+  it('should update patient with force flag', async () => {
+    const requestSpy = vi.spyOn(sdk, 'request' as any);
+    const result = await sdk.updatePatient(1, { name: 'Forced Update' }, true);
+
+    expect(requestSpy).toHaveBeenCalledWith('PUT', '/patient/1/force', { name: 'Forced Update' }, undefined, undefined);
+    expect(result).toBeDefined();
+    expect((result as any).payload.force).toBe(true);
+  });
+
+  it('should throw on 404 when switching organization', async () => {
+    server.use(
+      http.put('https://api.example.com/session/org/:orgId', () => new HttpResponse(null, { status: 404 }))
+    );
+
+    await expect(sdk.switchOrg(999)).rejects.toMatchObject({
+      status: 404,
+      code: ERROR_CODES.HTTP_ERROR,
+    });
   });
 
 
