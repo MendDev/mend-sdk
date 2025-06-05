@@ -40,6 +40,7 @@ export interface MendSdkOptions {
 
 // Re-export MendError for consumers
 export { MendError, ERROR_CODES } from './errors';
+export type { ErrorContext } from './errors';
 export { Json, QueryParams } from './http';
 export type { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
 

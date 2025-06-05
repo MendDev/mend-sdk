@@ -176,4 +176,19 @@ describe('HttpClient', () => {
       expect((err as MendError).code).toBe('ORG_NOT_FOUND');
     }
   });
+
+  it('should wrap network errors in MendError', async () => {
+    const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
+
+    const fetchSpy = vi.spyOn(global, 'fetch').mockRejectedValue(new Error('network fail'));
+
+    try {
+      await client.fetch('GET', '/test');
+    } catch (err) {
+      expect(err).toBeInstanceOf(MendError);
+      expect((err as MendError).context?.url).toBe('https://api.example.com/test');
+    }
+
+    fetchSpy.mockRestore();
+  });
 });
