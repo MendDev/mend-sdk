@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { http, HttpResponse, delay } from 'msw';
 import { setupServer } from 'msw/node';
 import MendSdk from '../lib/index';
@@ -48,6 +48,22 @@ describe('timeout and retry', () => {
 
     const res = await sdk.request('GET', '/flaky');
     expect((res as any).ok).toBe(true);
+    expect(flakyCalls).toBe(2);
+  });
+
+  it('supports custom backoff delay', async () => {
+    const sdk = new MendSdk({
+      apiEndpoint: 'https://api.example.com',
+      email: 'e',
+      password: 'p',
+      retryAttempts: 1,
+      retryBackoff: 10,
+    });
+
+    const delaySpy = vi.spyOn(sdk as any, 'delay');
+    const res = await sdk.request('GET', '/flaky');
+    expect((res as any).ok).toBe(true);
+    expect(delaySpy).toHaveBeenCalledWith(10);
     expect(flakyCalls).toBe(2);
   });
 });

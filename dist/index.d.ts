@@ -17,6 +17,8 @@ export interface MendSdkOptions {
     requestTimeout?: number;
     /** Number of times to retry a failed request (default 0) */
     retryAttempts?: number;
+    /** Base delay in ms for exponential backoff (default 100) */
+    retryBackoff?: number;
 }
 export { MendError, ERROR_CODES } from './errors';
 export { Json } from './http';
@@ -29,6 +31,7 @@ export declare class MendSdk {
     private readonly tokenTTL;
     private readonly requestTimeout;
     private readonly retryAttempts;
+    private readonly retryBackoff;
     private readonly authMutex;
     private activeOrgId;
     private availableOrgs;

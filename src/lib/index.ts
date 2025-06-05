@@ -36,6 +36,8 @@ export interface MendSdkOptions {
   requestTimeout?: number;
   /** Number of times to retry a failed request (default 0) */
   retryAttempts?: number;
+  /** Base delay in ms for exponential backoff (default 100) */
+  retryBackoff?: number;
 }
 
 // Re-export MendError for consumers
@@ -57,6 +59,7 @@ export class MendSdk {
   private readonly tokenTTL: number;
   private readonly requestTimeout: number;
   private readonly retryAttempts: number;
+  private readonly retryBackoff: number;
   private readonly authMutex = new Mutex();
 
   private activeOrgId: number | null = null;
@@ -90,6 +93,7 @@ export class MendSdk {
     this.tokenTTL = opts.tokenTTL ?? DEFAULT_TOKEN_TTL_MINUTES;
     this.requestTimeout = opts.requestTimeout ?? 30_000;
     this.retryAttempts = opts.retryAttempts ?? 0;
+    this.retryBackoff = opts.retryBackoff ?? 100;
   }
 
   /* ------------------------------------------------------------------------------------------ */
@@ -206,7 +210,7 @@ export class MendSdk {
         );
       } catch (err) {
         if (attempt >= this.retryAttempts) throw err;
-        await this.delay(2 ** attempt * 100);
+        await this.delay(this.retryBackoff * 2 ** attempt);
         attempt += 1;
       } finally {
         if (timer) clearTimeout(timer);
