@@ -1,36 +1,36 @@
 export interface Org {
-  id: number;
+  readonly id: number;
   /** Some endpoints return orgId instead of id */
-  orgId?: number;
-  name?: string;
-  [key: string]: any;
+  readonly orgId?: number;
+  readonly name?: string;
+  readonly [key: string]: unknown;
 }
 
 export interface User {
-  id: number;
-  [key: string]: any;
+  readonly id: number;
+  readonly [key: string]: unknown;
 }
 
 export interface Patient {
-  id: number;
-  [key: string]: any;
+  readonly id: number;
+  readonly [key: string]: unknown;
 }
 
 export interface AuthResponse {
-  token: string;
-  payload?: {
-    orgs?: Org[];
+  readonly token: string;
+  readonly payload?: {
+    readonly orgs?: Org[];
   };
 }
 
 export interface PropertiesResponse {
-  payload: {
-    properties: Record<string, unknown>;
+  readonly payload: {
+    readonly properties: Record<string, unknown>;
   };
 }
 
 export interface ListOrgsResponse {
-  payload: {
-    orgs: Org[];
+  readonly payload: {
+    readonly orgs: Org[];
   };
 }
