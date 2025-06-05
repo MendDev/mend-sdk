@@ -264,14 +264,32 @@ export class MendSdk {
   /* Sample convenience wrappers – extend as required                                          */
   /* ------------------------------------------------------------------------------------------ */
 
+  /**
+   * Fetch details for a single organization.
+   *
+   * @param orgId - Organization ID
+   * @param signal - Optional abort signal
+   */
   public async getOrg<T = Json<any>>(orgId: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/org/${orgId}`, undefined, undefined, signal);
   }
 
+  /**
+   * Retrieve a user's details by ID.
+   *
+   * @param userId - User ID
+   * @param signal - Optional abort signal
+   */
   public async getUser<T = Json<any>>(userId: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/user/${userId}`, undefined, undefined, signal);
   }
 
+  /**
+   * Search patients using any supported query parameters.
+   *
+   * @param query - Search filters and paging options
+   * @param signal - Optional abort signal
+   */
   public async searchPatients<T = Json<any>>(
     query: QueryParams = {},
     signal?: AbortSignal,
@@ -279,36 +297,86 @@ export class MendSdk {
     return this.request<T>('GET', '/patient', undefined, query, signal);
   }
 
+  /**
+   * Get a patient record by ID.
+   *
+   * @param id - Patient ID
+   * @param signal - Optional abort signal
+   */
   public async getPatient<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/patient/${id}`, undefined, undefined, signal);
   }
 
+  /**
+   * Fetch assessment scores for a patient.
+   *
+   * @param id - Patient ID
+   * @param signal - Optional abort signal
+   */
   public async getPatientAssessmentScores<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/patient/${id}/assessment-scores`, undefined, undefined, signal);
   }
 
+  /**
+   * Create a new patient record.
+   *
+   * @param payload - Patient data
+   * @param force - Bypass age or validation checks
+   * @param signal - Optional abort signal
+   */
   public async createPatient<T = Json<any>>(payload: Json<any>, force = false, signal?: AbortSignal): Promise<T> {
     const path = force ? '/patient/force' : '/patient';
     return this.request<T>('POST', path, payload, undefined, signal);
   }
 
+  /**
+   * Update an existing patient record.
+   *
+   * @param id - Patient ID
+   * @param payload - Fields to update
+   * @param force - Ignore update limits
+   * @param signal - Optional abort signal
+   */
   public async updatePatient<T = Json<any>>(id: number, payload: Json<any>, force = false, signal?: AbortSignal): Promise<T> {
     const path = force ? `/patient/${id}/force` : `/patient/${id}`;
     return this.request<T>('PUT', path, payload, undefined, signal);
   }
 
+  /**
+   * Delete a patient record.
+   *
+   * @param id - Patient ID
+   * @param signal - Optional abort signal
+   */
   public async deletePatient<T = Json<any>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('DELETE', `/patient/${id}`, undefined, undefined, signal);
   }
 
+  /**
+   * Retrieve an appointment by ID.
+   *
+   * @param appointmentId - Appointment ID
+   * @param signal - Optional abort signal
+   */
   public async getAppointment<T = Json<any>>(appointmentId: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/appointment/${appointmentId}`, undefined, undefined, signal);
   }
 
+  /**
+   * Create a new appointment.
+   *
+   * @param payload - Appointment details
+   * @param signal - Optional abort signal
+   */
   public async createAppointment<T = Json<any>>(payload: Json<any>, signal?: AbortSignal): Promise<T> {
     return this.request<T>('POST', '/appointment', payload, undefined, signal);
   }
 
+  /**
+   * List organizations available to the account.
+   *
+   * @param signal - Optional abort signal
+   */
   public async listOrgs<T = ListOrgsResponse>(signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', '/org', undefined, undefined, signal);
   }
@@ -333,6 +401,12 @@ export class MendSdk {
     this.mfaCode = undefined;
   }
 
+  /**
+   * Switch the active organization.
+   *
+   * @param orgId - Organization ID to switch to
+   * @param signal - Optional abort signal
+   */
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
     try {
       await this.request<Json<any>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
@@ -345,10 +419,22 @@ export class MendSdk {
     }
   }
 
+  /**
+   * Retrieve all application properties.
+   *
+   * @param signal - Optional abort signal
+   */
   public async getProperties<T = PropertiesResponse>(signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', '/property', undefined, undefined, signal);
   }
 
+  /**
+   * Convenience wrapper around `getProperties()` returning only the value.
+   *
+   * @param key - Property key to retrieve
+   * @param signal - Optional abort signal
+   * @returns The value stored for the given key
+   */
   public async getProperty<T = unknown>(key: string, signal?: AbortSignal): Promise<T> {
     const props = await this.getProperties<PropertiesResponse>(signal);
     return props.payload.properties[key] as T;

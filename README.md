@@ -8,14 +8,16 @@ Requires **Node.js 18+** or a global `fetch` polyfill in older Node versions. In
 
 ## Installation
 
+Package is published under the name `@menddev/sdk`.
+
 ```bash
-npm install @mend/sdk
+npm install @menddev/sdk
 ```
 
 ## Usage (Node/ESM)
 
 ```ts
-import MendSdk from '@mend/sdk';
+import MendSdk from '@menddev/sdk';
 
 const sdk = new MendSdk({
   apiEndpoint: 'https://api.mendfamily.com',
@@ -31,7 +33,7 @@ sdk.getUser(12345).then(console.log);
 ## Browser (UMD)
 
 ```html
-<script src="https://unpkg.com/@mend/sdk@1/dist/sdk.umd.js"></script>
+<script src="https://unpkg.com/@menddev/sdk@1/dist/sdk.umd.js"></script>
 <script>
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
@@ -70,7 +72,7 @@ await sdk.submitMfaCode('123456');
 
 ```tsx
 import { useEffect, useState } from 'react';
-import MendSdk from '@mend/sdk';
+import MendSdk from '@menddev/sdk';
 
 const sdk = new MendSdk({
   apiEndpoint: import.meta.env.VITE_MEND_API,
@@ -113,7 +115,7 @@ export function UserCard({ id }: { id: number }) {
 ### Minimal browser script
 
 ```html
-<script src="https://unpkg.com/@mend/sdk@1/dist/sdk.umd.js"></script>
+<script src="https://unpkg.com/@menddev/sdk@1/dist/sdk.umd.js"></script>
 <script>
   const sdk = new MendSdk({
     apiEndpoint: 'https://api.mendfamily.com',
@@ -134,6 +136,20 @@ export function UserCard({ id }: { id: number }) {
 - All helpers return **Promises** and accept `AbortSignal` as the last argument.
 - Errors include a `.code` such as `'SDK_CONFIG'`, `'AUTH_MFA_REQUIRED'` or `'ORG_NOT_FOUND'` so you can branch on them.
 - Common types like `Org`, `User` and `Patient` are exported for convenience.
+
+### Handling errors
+
+```ts
+import { MendError } from '@menddev/sdk';
+
+try {
+  await sdk.getUser(1);
+} catch (err) {
+  if (err instanceof MendError && err.code === 'ORG_NOT_FOUND') {
+    console.error('Organization not found');
+  }
+}
+```
 
 ### Error codes
 
@@ -214,6 +230,15 @@ combination of fields as query parameters:
 Unknown keys are ignored. The method returns the paginated list of matching
 patients.
 
+### Properties
+
+```ts
+const all = await sdk.getProperties();
+const timezone = await sdk.getProperty<string>('timezone');
+```
+
+`getProperty(key)` returns only the value for the given key rather than the full response object.
+
 ## Development
 
 ```bash
@@ -222,5 +247,5 @@ npm run build
 
 ## CDN
 
-- https://unpkg.com/@mend/sdk@1/dist/sdk.umd.js
-- https://cdn.jsdelivr.net/npm/@mend/sdk@1/dist/sdk.umd.js
+- https://unpkg.com/@menddev/sdk@1/dist/sdk.umd.js
+- https://cdn.jsdelivr.net/npm/@menddev/sdk@1/dist/sdk.umd.js
