@@ -141,10 +141,6 @@ export function setupMswServer(additionalHandlers: any[] = []) {
       return HttpResponse.json(mockResponses.auth.success);
     }),
     
-    // Session refresh
-    http.post('*/session/refresh', () => {
-      return HttpResponse.json(mockResponses.refresh.success);
-    }),
     
     // Switch organization
     http.put('*/session/org/:orgId', () => {
@@ -191,16 +187,8 @@ export function setupMswServer(additionalHandlers: any[] = []) {
       return HttpResponse.json({ status: 'success' });
     }),
     
-    // Note the path discrepancy fixed here
+    // Assessment scores endpoint
     http.get('*/patient/:id/assessment-scores', () => {
-      return HttpResponse.json({
-        status: 'success',
-        scores: [{ id: 1, score: 85 }]
-      });
-    }),
-    
-    // Handle both formats of the assessment scores path
-    http.get('*/patient/:id/assessment/scores', () => {
       return HttpResponse.json({
         status: 'success',
         scores: [{ id: 1, score: 85 }]

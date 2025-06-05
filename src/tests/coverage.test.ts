@@ -15,9 +15,6 @@ const server = setupServer(
   http.post('https://api.example.com/session/mfa/code', () => {
     return HttpResponse.json({ token: 'post-mfa-jwt-token', payload: { orgs: [{ id: 123, name: 'Test Organization' }] } });
   }),
-  http.post('https://api.example.com/session/refresh', () => {
-    return HttpResponse.json({ token: 'refreshed-jwt-token' });
-  }),
   http.put('https://api.example.com/session/org/:orgId', ({ params }) => {
     const { orgId } = params;
     return HttpResponse.json({ payload: { org_id: Number(orgId) } });
@@ -43,7 +40,7 @@ const server = setupServer(
     const { patientId } = params;
     return HttpResponse.json({ payload: { id: Number(patientId), name: 'Test Patient' } });
   }),
-  http.get('https://api.example.com/patient/:patientId/assessment/scores', ({ params }) => {
+  http.get('https://api.example.com/patient/:patientId/assessment-scores', ({ params }) => {
     const { patientId } = params;
     return HttpResponse.json({ payload: [{ id: 1, patient_id: Number(patientId), score: 85 }] });
   }),
