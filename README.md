@@ -287,6 +287,19 @@ npm run build
 npm run docs
 ```
 
+## Contributing
+
+We welcome pull requests for new features or API wrappers. To add a new
+endpoint helper:
+
+1. Implement the method in `src/lib/index.ts` using the existing wrappers as a
+   guide.
+2. Add accompanying tests under `src/tests` covering success and error cases.
+3. Run `npm run typecheck`, `npm run lint` and `npm test` to ensure the project
+   passes before submitting your PR.
+
+Please keep changes focused and include documentation updates where relevant.
+
 ## CDN
 
 - https://unpkg.com/@menddev/sdk@1/dist/sdk.umd.js
