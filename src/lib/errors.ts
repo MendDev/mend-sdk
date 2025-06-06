@@ -24,7 +24,7 @@ export class MendError extends Error {
     this.status = status;
     this.details = details;
     this.context = context;
-    
+
     // Ensures proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, MendError.prototype);
   }

@@ -32,11 +32,17 @@ describe('MFA authentication flow', () => {
     server.use(
       http.post('https://api.example.com/session', () => HttpResponse.json({})),
       http.put('https://api.example.com/session/mfa', async ({ request }) => {
-        const body = await request.json() as any;
-        return HttpResponse.json({ token: 'mfa-token', payload: { orgs: [{ id: 123 }] }, received: body });
+        const body = (await request.json()) as any;
+        return HttpResponse.json({
+          token: 'mfa-token',
+          payload: { orgs: [{ id: 123 }] },
+          received: body,
+        });
       }),
-      http.put('https://api.example.com/session/org/:orgId', () => HttpResponse.json({ payload: { org_id: 123 } })),
-      http.get('https://api.example.com/user/1', () => HttpResponse.json({ payload: { id: 1 } }))
+      http.put('https://api.example.com/session/org/:orgId', () =>
+        HttpResponse.json({ payload: { org_id: 123 } }),
+      ),
+      http.get('https://api.example.com/user/1', () => HttpResponse.json({ payload: { id: 1 } })),
     );
 
     const sdk = new MendSdk({
@@ -62,13 +68,15 @@ describe('Concurrent authentication', () => {
     server.use(
       http.post('https://api.example.com/session', async () => {
         authCalls += 1;
-        await new Promise(res => setTimeout(res, 50));
+        await new Promise((res) => setTimeout(res, 50));
         return HttpResponse.json({ token: 'fake-jwt', payload: { orgs: [{ id: 123 }] } });
       }),
-      http.put('https://api.example.com/session/org/:orgId', () => HttpResponse.json({ payload: { org_id: 123 } })),
+      http.put('https://api.example.com/session/org/:orgId', () =>
+        HttpResponse.json({ payload: { org_id: 123 } }),
+      ),
       http.get('https://api.example.com/user/:id', ({ params }) => {
         return HttpResponse.json({ payload: { id: Number(params.id) } });
-      })
+      }),
     );
 
     const sdk = new MendSdk({
@@ -94,7 +102,9 @@ describe('Security features', () => {
   it('throws on http endpoint in production', () => {
     const env = process.env.NODE_ENV;
     process.env.NODE_ENV = 'production';
-    expect(() => new MendSdk({ apiEndpoint: 'http://api.example.com', email: 'a', password: 'b' })).toThrow(MendError);
+    expect(
+      () => new MendSdk({ apiEndpoint: 'http://api.example.com', email: 'a', password: 'b' }),
+    ).toThrow(MendError);
     process.env.NODE_ENV = env;
   });
 
@@ -111,12 +121,21 @@ describe('Security features', () => {
 
   it('clears jwt on logout', async () => {
     server.use(
-      http.post('https://api.example.com/session', () => HttpResponse.json({ token: 'tok', payload: { orgs: [{ id: 1 }] } })),
-      http.put('https://api.example.com/session/org/:orgId', () => HttpResponse.json({ payload: { org_id: 1 } })),
-      http.get('https://api.example.com/user/1', () => HttpResponse.json({ payload: { id: 1 } }))
+      http.post('https://api.example.com/session', () =>
+        HttpResponse.json({ token: 'tok', payload: { orgs: [{ id: 1 }] } }),
+      ),
+      http.put('https://api.example.com/session/org/:orgId', () =>
+        HttpResponse.json({ payload: { org_id: 1 } }),
+      ),
+      http.get('https://api.example.com/user/1', () => HttpResponse.json({ payload: { id: 1 } })),
     );
 
-    const sdk = new MendSdk({ apiEndpoint: 'https://api.example.com', email: 'a', password: 'b', orgId: 1 });
+    const sdk = new MendSdk({
+      apiEndpoint: 'https://api.example.com',
+      email: 'a',
+      password: 'b',
+      orgId: 1,
+    });
     await sdk.getUser(1); // triggers login
     expect((sdk as any).jwt).toBe('tok');
     sdk.logout();

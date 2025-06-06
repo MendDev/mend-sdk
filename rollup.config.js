@@ -9,18 +9,18 @@ export default {
     {
       file: 'dist/sdk.esm.js',
       format: 'es',
-      plugins: [terser()]
+      plugins: [terser()],
     },
     {
       file: 'dist/sdk.cjs.js',
       format: 'cjs',
-      plugins: [terser()]
+      plugins: [terser()],
     },
     {
       file: 'dist/sdk.umd.js',
       format: 'umd',
       name: 'MendSdk',
-      plugins: [terser()]
+      plugins: [terser()],
     },
   ],
 };

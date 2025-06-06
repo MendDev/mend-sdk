@@ -10,7 +10,7 @@ const server = setupServer(
   http.get('https://api.example.com/test', () => {
     return HttpResponse.json({ success: true, data: 'test data' });
   }),
-  
+
   // Handler for testing error responses
   http.get('https://api.example.com/error', () => {
     return HttpResponse.json({ error: 'Test error' }, { status: 400 });
@@ -18,19 +18,22 @@ const server = setupServer(
 
   // Handler returning structured error with code
   http.get('https://api.example.com/mfa', () => {
-    return HttpResponse.json({ message: 'MFA required', code: 'AUTH_MFA_REQUIRED' }, { status: 401 });
+    return HttpResponse.json(
+      { message: 'MFA required', code: 'AUTH_MFA_REQUIRED' },
+      { status: 401 },
+    );
   }),
 
   http.put('https://api.example.com/org/999', () => {
     return HttpResponse.json({ message: 'Org not found', code: 'ORG_NOT_FOUND' }, { status: 404 });
   }),
-  
+
   // Handler for testing POST requests
   http.post('https://api.example.com/submit', async ({ request }) => {
     const body = await request.json();
     return HttpResponse.json({ received: body });
   }),
-  
+
   // Handler for testing query parameters
   http.get('https://api.example.com/query', ({ request }) => {
     const url = new URL(request.url);
@@ -45,14 +48,14 @@ const server = setupServer(
     });
     return HttpResponse.json({ params });
   }),
-  
+
   // Handler for testing headers
   http.get('https://api.example.com/headers', ({ request }) => {
     return HttpResponse.json({
       headers: {
         'x-custom-header': request.headers.get('x-custom-header'),
-        'content-type': request.headers.get('content-type')
-      }
+        'content-type': request.headers.get('content-type'),
+      },
     });
   }),
 
@@ -60,11 +63,11 @@ const server = setupServer(
   http.get('https://api.example.com/badjson', () => {
     return new HttpResponse('not-json', { headers: { 'content-type': 'application/json' } });
   }),
-  
+
   // Handler for testing empty responses
   http.get('https://api.example.com/empty', () => {
     return new HttpResponse(null, { status: 204 });
-  })
+  }),
 );
 
 // Start server before all tests
@@ -79,19 +82,19 @@ describe('HttpClient', () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
     expect(client).toBeInstanceOf(HttpClient);
   });
-  
+
   it('should make successful GET requests', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
     const response = await client.fetch('GET', '/test');
-    
+
     expect(response).toEqual({ success: true, data: 'test data' });
   });
-  
+
   it('should throw MendError on failed requests', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
-    
+
     await expect(client.fetch('GET', '/error')).rejects.toThrow(MendError);
-    
+
     try {
       await client.fetch('GET', '/error');
     } catch (error) {
@@ -108,29 +111,32 @@ describe('HttpClient', () => {
     } catch (err) {
       expect(err).toBeInstanceOf(MendError);
       expect((err as MendError).code).toBe('AUTH_MFA_REQUIRED');
-      expect((err as MendError).details).toEqual({ message: 'MFA required', code: 'AUTH_MFA_REQUIRED' });
+      expect((err as MendError).details).toEqual({
+        message: 'MFA required',
+        code: 'AUTH_MFA_REQUIRED',
+      });
     }
   });
-  
+
   it('should send body data with POST requests', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
     const testData = { name: 'Test User', age: 30 };
-    
+
     const response = await client.fetch('POST', '/submit', testData);
     expect(response).toEqual({ received: testData });
   });
-  
+
   it('should handle query parameters correctly', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
     const query = { page: 1, limit: 10, search: 'test query' };
-    
+
     const response = await client.fetch('GET', '/query', undefined, query);
-    expect(response).toEqual({ 
-      params: { 
+    expect(response).toEqual({
+      params: {
         page: '1',
         limit: '10',
-        search: 'test query'
-      } 
+        search: 'test query',
+      },
     });
   });
 
@@ -141,29 +147,29 @@ describe('HttpClient', () => {
     const response = await client.fetch('GET', '/query', undefined, query);
     expect(response).toEqual({
       params: {
-        tag: ['a', 'b']
-      }
+        tag: ['a', 'b'],
+      },
     });
   });
-  
+
   it('should include default and custom headers', async () => {
-    const client = createHttpClient({ 
+    const client = createHttpClient({
       apiEndpoint: 'https://api.example.com',
-      defaultHeaders: { 'x-client-id': 'test-client' }
+      defaultHeaders: { 'x-client-id': 'test-client' },
     });
-    
+
     const response = await client.fetch(
-      'GET', 
-      '/headers', 
-      undefined, 
-      {}, 
-      { 'x-custom-header': 'custom-value' }
+      'GET',
+      '/headers',
+      undefined,
+      {},
+      { 'x-custom-header': 'custom-value' },
     );
-    
+
     expect(response).toHaveProperty('headers');
     expect((response as any).headers['x-custom-header']).toBe('custom-value');
   });
-  
+
   it('should handle empty responses', async () => {
     const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
     const response = await client.fetch('GET', '/empty');

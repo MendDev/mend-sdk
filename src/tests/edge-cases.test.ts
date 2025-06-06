@@ -6,10 +6,10 @@ import { ERROR_CODES } from '../lib/errors';
 
 const server = setupServer(
   http.post('https://api.example.com/session', () =>
-    HttpResponse.json({ token: 'tok', payload: { orgs: [{ id: 1 }] } })
+    HttpResponse.json({ token: 'tok', payload: { orgs: [{ id: 1 }] } }),
   ),
   http.put('https://api.example.com/session/org/:orgId', () =>
-    HttpResponse.json({ payload: { org_id: 1 } })
+    HttpResponse.json({ payload: { org_id: 1 } }),
   ),
   http.post('https://api.example.com/patient', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
@@ -25,7 +25,7 @@ const server = setupServer(
     }
     const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: Number(id), ...body } });
-  })
+  }),
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
@@ -34,7 +34,12 @@ afterAll(() => server.close());
 
 describe('API edge cases', () => {
   it('throws when required fields are missing on createPatient', async () => {
-    const sdk = new MendSdk({ apiEndpoint: 'https://api.example.com', email: 'e', password: 'p', orgId: 1 });
+    const sdk = new MendSdk({
+      apiEndpoint: 'https://api.example.com',
+      email: 'e',
+      password: 'p',
+      orgId: 1,
+    });
 
     await expect(sdk.createPatient({} as Record<string, unknown>)).rejects.toMatchObject({
       status: 400,
@@ -43,7 +48,12 @@ describe('API edge cases', () => {
   });
 
   it('throws when updating a non-existent patient', async () => {
-    const sdk = new MendSdk({ apiEndpoint: 'https://api.example.com', email: 'e', password: 'p', orgId: 1 });
+    const sdk = new MendSdk({
+      apiEndpoint: 'https://api.example.com',
+      email: 'e',
+      password: 'p',
+      orgId: 1,
+    });
 
     await expect(sdk.updatePatient(999, { name: 'x' })).rejects.toMatchObject({
       status: 404,

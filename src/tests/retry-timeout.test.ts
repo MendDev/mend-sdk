@@ -23,7 +23,10 @@ const server = setupServer(
 );
 
 beforeAll(() => server.listen());
-afterEach(() => { flakyCalls = 0; server.resetHandlers(); });
+afterEach(() => {
+  flakyCalls = 0;
+  server.resetHandlers();
+});
 afterAll(() => server.close());
 
 describe('timeout and retry', () => {

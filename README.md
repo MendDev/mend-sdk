@@ -88,7 +88,7 @@ export function UserCard({ id }: { id: number }) {
   useEffect(() => {
     const abort = new AbortController();
 
-  sdk
+    sdk
       .getUser<Json<{ payload: { user: User } }>>(id, abort.signal)
       .then(setUser)
       .catch((err) => {
@@ -153,36 +153,36 @@ try {
 
 ### Error codes
 
-| Code | Meaning |
-|------|---------|
-| SDK_CONFIG | Missing or invalid SDK options |
-| AUTH_MISSING_TOKEN | JWT not returned by the API |
-| AUTH_MFA_REQUIRED | MFA code is required to authenticate |
-| AUTH_INVALID_MFA | Provided MFA code was rejected |
-| ORG_NOT_FOUND | Organization does not exist or is not accessible |
-| HTTP_ERROR | Other server or network failure |
+| Code               | Meaning                                          |
+| ------------------ | ------------------------------------------------ |
+| SDK_CONFIG         | Missing or invalid SDK options                   |
+| AUTH_MISSING_TOKEN | JWT not returned by the API                      |
+| AUTH_MFA_REQUIRED  | MFA code is required to authenticate             |
+| AUTH_INVALID_MFA   | Provided MFA code was rejected                   |
+| ORG_NOT_FOUND      | Organization does not exist or is not accessible |
+| HTTP_ERROR         | Other server or network failure                  |
 
 ## API Reference
 
-| Method | Purpose |
-| ------ | ------- |
-| `request(method, path, body?, query?, signal?)` | Low level wrapper used by all helpers |
-| `getOrg(orgId)` | Fetch organization details |
-| `getUser(userId)` | Retrieve a user's details |
-| `searchPatients(query)` | Search patients with filters |
-| `getPatient(id)` | Get a patient record |
-| `getPatientAssessmentScores(id)` | Retrieve a patient's assessment scores |
-| `createPatient(payload, force?)` | Create a new patient |
-| `updatePatient(id, payload, force?)` | Update an existing patient |
-| `deletePatient(id)` | Delete a patient |
-| `getAppointment(id)` | Retrieve an appointment |
-| `createAppointment(payload)` | Create an appointment |
-| `listOrgs()` | List accessible organizations |
-| `submitMfaCode(code)` | Complete MFA authentication |
-| `switchOrg(orgId)` | Change the active organization |
-| `getProperties()` | Fetch all application properties |
-| `getProperty(key)` | Retrieve a single property value |
-| `logout()` | Clear authentication state |
+| Method                                          | Purpose                                |
+| ----------------------------------------------- | -------------------------------------- |
+| `request(method, path, body?, query?, signal?)` | Low level wrapper used by all helpers  |
+| `getOrg(orgId)`                                 | Fetch organization details             |
+| `getUser(userId)`                               | Retrieve a user's details              |
+| `searchPatients(query)`                         | Search patients with filters           |
+| `getPatient(id)`                                | Get a patient record                   |
+| `getPatientAssessmentScores(id)`                | Retrieve a patient's assessment scores |
+| `createPatient(payload, force?)`                | Create a new patient                   |
+| `updatePatient(id, payload, force?)`            | Update an existing patient             |
+| `deletePatient(id)`                             | Delete a patient                       |
+| `getAppointment(id)`                            | Retrieve an appointment                |
+| `createAppointment(payload)`                    | Create an appointment                  |
+| `listOrgs()`                                    | List accessible organizations          |
+| `submitMfaCode(code)`                           | Complete MFA authentication            |
+| `switchOrg(orgId)`                              | Change the active organization         |
+| `getProperties()`                               | Fetch all application properties       |
+| `getProperty(key)`                              | Retrieve a single property value       |
+| `logout()`                                      | Clear authentication state             |
 
 ### Troubleshooting
 
@@ -190,8 +190,8 @@ try {
 `status` and `details` fields on the thrown `MendError` for clues. Ensure the
 `apiEndpoint` is reachable and credentials are correct. Retrying the request or
 inspecting network traffic with a debugging proxy can help isolate issues.
-## Patient helpers
 
+## Patient helpers
 
 The SDK exposes helper methods covering all `/patient` routes. Searching accepts
 any of the query parameters supported by the API (see below).

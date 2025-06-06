@@ -48,7 +48,7 @@ export class HttpClient {
 
   /**
    * Make an HTTP request to the API
-   * 
+   *
    * @param method HTTP method to use
    * @param path API path (will be appended to apiEndpoint)
    * @param body Optional request body
@@ -124,13 +124,10 @@ export class HttpClient {
         code = serverCode as ErrorCode;
       }
 
-      throw new MendError(
-        message,
-        code,
-        resp.status,
-        details,
-        { ...context, responseBody: details },
-      );
+      throw new MendError(message, code, resp.status, details, {
+        ...context,
+        responseBody: details,
+      });
     }
 
     /* Some endpoints return empty body (204). Attempt JSON parse only when content exists. */

@@ -47,7 +47,14 @@ export interface MendSdkOptions {
 export { MendError, ERROR_CODES } from './errors';
 export type { ErrorContext } from './errors';
 export { Json, QueryParams } from './http';
-export type { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
+export type {
+  Org,
+  User,
+  Patient,
+  AuthResponse,
+  PropertiesResponse,
+  ListOrgsResponse,
+} from './types';
 
 /* ------------------------------------------------------------------------------------------------
  * Main SDK Class
@@ -88,7 +95,7 @@ export class MendSdk {
       apiEndpoint: opts.apiEndpoint,
       defaultHeaders: opts.defaultHeaders,
     });
-    
+
     this.email = opts.email;
     this.password = opts.password;
     this.orgId = opts.orgId;
@@ -158,19 +165,19 @@ export class MendSdk {
 
   private async ensureAuth(): Promise<void> {
     // Use mutex to prevent multiple concurrent authentication attempts
-  // Fast-path: token still valid → no locking required
-  if (this.jwt && Date.now() < this.jwtExpiresAt) return;
+    // Fast-path: token still valid → no locking required
+    if (this.jwt && Date.now() < this.jwtExpiresAt) return;
 
-   await this.authMutex.lock(async () => {
-    // Double-check in case another waiter already refreshed the token
-    if (!this.jwt || Date.now() >= this.jwtExpiresAt) {
-      await this.authenticate();
-    }
-   });
+    await this.authMutex.lock(async () => {
+      // Double-check in case another waiter already refreshed the token
+      if (!this.jwt || Date.now() >= this.jwtExpiresAt) {
+        await this.authenticate();
+      }
+    });
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private buildAuthHeaders(): Record<string, string> {
@@ -201,14 +208,7 @@ export class MendSdk {
       }
 
       try {
-        return await this.httpClient.fetch<T>(
-          method,
-          path,
-          body,
-          query,
-          headers,
-          ctrl.signal,
-        );
+        return await this.httpClient.fetch<T>(method, path, body, query, headers, ctrl.signal);
       } catch (err) {
         if (attempt >= this.retryAttempts) throw err;
         await this.delay(this.retryBackoff * 2 ** attempt);
@@ -256,14 +256,7 @@ export class MendSdk {
     await this.ensureAuth();
 
     const doRequest = async () =>
-      this.fetchWithRetry<T>(
-        method,
-        path,
-        body,
-        query || {},
-        this.buildAuthHeaders(),
-        signal,
-      );
+      this.fetchWithRetry<T>(method, path, body, query || {}, this.buildAuthHeaders(), signal);
 
     try {
       return await doRequest();
@@ -334,7 +327,10 @@ export class MendSdk {
    * @param id - Patient ID
    * @param signal - Optional abort signal
    */
-  public async getPatientAssessmentScores<T = Json<unknown>>(id: number, signal?: AbortSignal): Promise<T> {
+  public async getPatientAssessmentScores<T = Json<unknown>>(
+    id: number,
+    signal?: AbortSignal,
+  ): Promise<T> {
     return this.request<T>('GET', `/patient/${id}/assessment-scores`, undefined, undefined, signal);
   }
 
@@ -347,7 +343,11 @@ export class MendSdk {
    * @param force - Bypass age or validation checks
    * @param signal - Optional abort signal
    */
-  public async createPatient<T = Json<unknown>>(payload: Json<unknown>, force = false, signal?: AbortSignal): Promise<T> {
+  public async createPatient<T = Json<unknown>>(
+    payload: Json<unknown>,
+    force = false,
+    signal?: AbortSignal,
+  ): Promise<T> {
     const path = force ? '/patient/force' : '/patient';
     return this.request<T>('POST', path, payload, undefined, signal);
   }
@@ -361,7 +361,12 @@ export class MendSdk {
    * @param force - Ignore update limits
    * @param signal - Optional abort signal
    */
-  public async updatePatient<T = Json<unknown>>(id: number, payload: Json<unknown>, force = false, signal?: AbortSignal): Promise<T> {
+  public async updatePatient<T = Json<unknown>>(
+    id: number,
+    payload: Json<unknown>,
+    force = false,
+    signal?: AbortSignal,
+  ): Promise<T> {
     const path = force ? `/patient/${id}/force` : `/patient/${id}`;
     return this.request<T>('PUT', path, payload, undefined, signal);
   }
@@ -384,7 +389,10 @@ export class MendSdk {
    * @param appointmentId - Appointment ID
    * @param signal - Optional abort signal
    */
-  public async getAppointment<T = Json<unknown>>(appointmentId: number, signal?: AbortSignal): Promise<T> {
+  public async getAppointment<T = Json<unknown>>(
+    appointmentId: number,
+    signal?: AbortSignal,
+  ): Promise<T> {
     return this.request<T>('GET', `/appointment/${appointmentId}`, undefined, undefined, signal);
   }
 
@@ -394,7 +402,10 @@ export class MendSdk {
    * @param payload - Appointment details
    * @param signal - Optional abort signal
    */
-  public async createAppointment<T = Json<unknown>>(payload: Json<unknown>, signal?: AbortSignal): Promise<T> {
+  public async createAppointment<T = Json<unknown>>(
+    payload: Json<unknown>,
+    signal?: AbortSignal,
+  ): Promise<T> {
     return this.request<T>('POST', '/appointment', payload, undefined, signal);
   }
 
@@ -413,14 +424,14 @@ export class MendSdk {
   public async submitMfaCode(code: string | number, signal?: AbortSignal): Promise<void> {
     // This bypasses ensureAuth, but still needs the current token if available
     const authHeaders = this.buildAuthHeaders();
-    
+
     const res = await this.httpClient.fetch<AuthResponse>(
       'PUT',
       '/session/mfa',
       { mfaCode: code },
       {},
       authHeaders,
-      signal
+      signal,
     );
 
     await this.completeLogin(res);

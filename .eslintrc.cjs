@@ -19,12 +19,15 @@ module.exports = {
   },
   rules: {
     // === UNUSED CODE DETECTION ===
-    '@typescript-eslint/no-unused-vars': ['warn', {
-      args: 'after-used',
-      varsIgnorePattern: '^_',
-      argsIgnorePattern: '^_',
-      destructuredArrayIgnorePattern: '^_'
-    }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        args: 'after-used',
+        varsIgnorePattern: '^_',
+        argsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      },
+    ],
     'no-unused-vars': 'off', // Turn off base rule for TypeScript
     '@typescript-eslint/no-unused-expressions': 'warn',
     'no-unreachable': 'warn',
@@ -44,38 +47,47 @@ module.exports = {
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
     '@typescript-eslint/no-unnecessary-condition': 'warn',
     '@typescript-eslint/prefer-as-const': 'error',
-    '@typescript-eslint/consistent-type-imports': ['error', {
-      prefer: 'type-imports',
-      disallowTypeAnnotations: false
-    }],
+    '@typescript-eslint/consistent-type-imports': [
+      'error',
+      {
+        prefer: 'type-imports',
+        disallowTypeAnnotations: false,
+      },
+    ],
     '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
     '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
     '@typescript-eslint/prefer-function-type': 'error',
 
     // === CODE QUALITY & BEST PRACTICES ===
-    'eqeqeq': ['error', 'always'],
+    eqeqeq: ['error', 'always'],
     'no-var': 'error',
     'prefer-const': 'error',
     'prefer-arrow-callback': 'error',
     'prefer-template': 'error',
-    'prefer-destructuring': ['warn', {
-      array: true,
-      object: true
-    }],
+    'prefer-destructuring': [
+      'warn',
+      {
+        array: true,
+        object: true,
+      },
+    ],
     'no-console': 'warn',
     'no-debugger': 'error',
     'no-alert': 'error',
     'no-eval': 'error',
     'no-implied-eval': 'error',
-    'curly': 'error',
+    curly: 'error',
     'default-case': 'warn',
     'no-fallthrough': 'error',
     'no-duplicate-imports': 'error',
-    'no-magic-numbers': ['warn', {
-      ignore: [-1, 0, 1, 2],
-      ignoreArrayIndexes: true,
-      ignoreDefaultValues: true
-    }],
+    'no-magic-numbers': [
+      'warn',
+      {
+        ignore: [-1, 0, 1, 2],
+        ignoreArrayIndexes: true,
+        ignoreDefaultValues: true,
+      },
+    ],
 
     // === ASYNC/PROMISE BEST PRACTICES ===
     'no-async-promise-executor': 'error',
@@ -85,21 +97,17 @@ module.exports = {
     'require-atomic-updates': 'error',
 
     // === IMPORT/EXPORT BEST PRACTICES ===
-    'import/order': ['error', {
-      groups: [
-        'builtin',
-        'external',
-        'internal',
-        'parent',
-        'sibling',
-        'index'
-      ],
-      'newlines-between': 'always',
-      alphabetize: {
-        order: 'asc',
-        caseInsensitive: true
-      }
-    }],
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        'newlines-between': 'always',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+      },
+    ],
     'import/no-duplicates': 'error',
     'import/no-unresolved': 'error',
     'import/no-cycle': 'error',
@@ -114,7 +122,7 @@ module.exports = {
     'no-new-wrappers': 'error',
     'no-proto': 'error',
     'no-script-url': 'error',
-    'radix': 'error',
+    radix: 'error',
 
     // === ERROR PREVENTION ===
     'no-cond-assign': 'error',

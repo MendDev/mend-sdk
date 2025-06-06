@@ -8,28 +8,38 @@ import { MendError, ERROR_CODES } from '../lib/errors';
 const server = setupServer(
   // Authentication endpoints
   http.post('https://api.example.com/session', () => {
-    return HttpResponse.json({ token: 'fake-jwt-token', payload: { orgs: [{ id: 123, name: 'Test Organization' }] } });
+    return HttpResponse.json({
+      token: 'fake-jwt-token',
+      payload: { orgs: [{ id: 123, name: 'Test Organization' }] },
+    });
   }),
-  
+
   // User endpoints
   http.get('https://api.example.com/user/:userId', ({ params }) => {
     const { userId } = params;
     return HttpResponse.json({ payload: { id: Number(userId), name: 'Test User' } });
   }),
-  
+
   // Organization endpoints
   http.get('https://api.example.com/org/:orgId', ({ params }) => {
     const { orgId } = params;
     return HttpResponse.json({ payload: { id: Number(orgId), name: 'Test Organization' } });
   }),
   http.get('https://api.example.com/org', () => {
-    return HttpResponse.json({ payload: { orgs: [{ id: 123, name: 'Test Org 1' }, { id: 456, name: 'Test Org 2' }] } });
+    return HttpResponse.json({
+      payload: {
+        orgs: [
+          { id: 123, name: 'Test Org 1' },
+          { id: 456, name: 'Test Org 2' },
+        ],
+      },
+    });
   }),
   http.put('https://api.example.com/session/org/:orgId', ({ params }) => {
     const { orgId } = params;
     return HttpResponse.json({ payload: { org_id: Number(orgId) } });
   }),
-  
+
   // Patient endpoints
   http.get('https://api.example.com/patient/:patientId', ({ params }) => {
     const { patientId } = params;
@@ -42,17 +52,17 @@ const server = setupServer(
   http.get('https://api.example.com/patient', ({ request }) => {
     const url = new URL(request.url);
     const nameParam = url.searchParams.get('name');
-    
+
     if (nameParam === 'Test') {
       return HttpResponse.json({ payload: [{ id: 1, name: 'Test Patient' }] });
     }
     return HttpResponse.json({ payload: [] });
   }),
   http.post('https://api.example.com/patient', async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const url = new URL(request.url);
     const forceParam = url.searchParams.get('force');
-    
+
     if (forceParam === 'true') {
       return HttpResponse.json({ payload: { id: 3, name: body.name, force: true } });
     }
@@ -60,44 +70,50 @@ const server = setupServer(
   }),
   // Force create patient path
   http.post('https://api.example.com/patient/force', async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: 3, name: body.name, force: true } });
   }),
   http.put('https://api.example.com/patient/:patientId', async ({ request, params }) => {
     const { patientId } = params;
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const url = new URL(request.url);
     const forceParam = url.searchParams.get('force');
-    
+
     if (forceParam === 'true') {
-      return HttpResponse.json({ payload: { id: Number(patientId), name: body.name, force: true } });
+      return HttpResponse.json({
+        payload: { id: Number(patientId), name: body.name, force: true },
+      });
     }
     return HttpResponse.json({ payload: { id: Number(patientId), name: body.name } });
   }),
   // Force update patient path
   http.put('https://api.example.com/patient/:patientId/force', async ({ request, params }) => {
     const { patientId } = params;
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: Number(patientId), name: body.name, force: true } });
   }),
   http.delete('https://api.example.com/patient/:patientId', ({ params }) => {
     const { patientId } = params;
     return HttpResponse.json({ payload: { success: true, id: Number(patientId) } });
   }),
-  
+
   // Appointment endpoints
   http.get('https://api.example.com/appointment/:appointmentId', ({ params }) => {
     const { appointmentId } = params;
-    return HttpResponse.json({ payload: { id: Number(appointmentId), patient_id: 1, time: '2025-06-01T15:00:00Z' } });
+    return HttpResponse.json({
+      payload: { id: Number(appointmentId), patient_id: 1, time: '2025-06-01T15:00:00Z' },
+    });
   }),
   http.post('https://api.example.com/appointment', async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     return HttpResponse.json({ payload: { id: 2, patient_id: body.patient_id, time: body.time } });
   }),
-  
+
   // Property endpoints
   http.get('https://api.example.com/property', () => {
-    return HttpResponse.json({ payload: { properties: { test_key: 'test_value', another_key: 'another_value' } } });
+    return HttpResponse.json({
+      payload: { properties: { test_key: 'test_value', another_key: 'another_value' } },
+    });
   }),
   http.get('https://api.example.com/property/:key', ({ params }) => {
     const { key } = params;
@@ -106,17 +122,17 @@ const server = setupServer(
     }
     return new HttpResponse(null, { status: 404 });
   }),
-  
+
   // Test endpoint for request method tests
   http.post('https://api.example.com/test-endpoint', async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     const url = new URL(request.url);
-    
+
     if (body?.test === 'value' && url.searchParams.get('param') === 'value') {
       return HttpResponse.json({ success: true });
     }
     return new HttpResponse(null, { status: 400 });
-  })
+  }),
 );
 
 // Start server before all tests
@@ -145,7 +161,7 @@ describe('MendSdk Request Method', () => {
       apiEndpoint: 'https://api.example.com',
       email: 'test@example.com',
       password: 'password123',
-      orgId: 123
+      orgId: 123,
     });
   });
 
@@ -153,31 +169,31 @@ describe('MendSdk Request Method', () => {
     const result = await sdk.request<{ payload: { id: number; name: string } }>('GET', '/user/1');
     expect(result.payload.id).toBe(1);
   });
-  
+
   it('should handle request with body and query params', async () => {
     const result = await sdk.request(
       'POST',
       '/test-endpoint',
       { test: 'value' },
-      { param: 'value' }
+      { param: 'value' },
     );
-    
+
     expect(result).toEqual({ success: true });
   });
-  
+
   it('should handle AbortController signal', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    
+
     const controller = new AbortController();
     await sdk.request('GET', '/user/1', undefined, undefined, controller.signal);
-    
+
     // Verify the request was called with the signal
     expect(requestSpy).toHaveBeenCalledWith(
       'GET',
       '/user/1',
       undefined,
       undefined,
-      controller.signal
+      controller.signal,
     );
   });
 });
@@ -192,7 +208,7 @@ describe('MendSdk Convenience Methods', () => {
       apiEndpoint: 'https://api.example.com',
       email: 'test@example.com',
       password: 'password123',
-      orgId: 123 // Avoid org selection logic in tests
+      orgId: 123, // Avoid org selection logic in tests
     });
   });
 
@@ -216,15 +232,9 @@ describe('MendSdk Convenience Methods', () => {
   it('should switch organization', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     await sdk.switchOrg(2);
-    
+
     // Verify the PUT request was made to the correct endpoint
-    expect(requestSpy).toHaveBeenCalledWith(
-      'PUT',
-      '/session/org/2',
-      {},
-      undefined,
-      undefined
-    );
+    expect(requestSpy).toHaveBeenCalledWith('PUT', '/session/org/2', {}, undefined, undefined);
   });
 
   // User methods
@@ -241,7 +251,13 @@ describe('MendSdk Convenience Methods', () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.searchPatients<{ payload: Array<{ id: number }> }>({ name: 'Test' });
 
-    expect(requestSpy).toHaveBeenCalledWith('GET', '/patient', undefined, { name: 'Test' }, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'GET',
+      '/patient',
+      undefined,
+      { name: 'Test' },
+      undefined,
+    );
     expect(Array.isArray(result.payload)).toBe(true);
   });
 
@@ -253,33 +269,47 @@ describe('MendSdk Convenience Methods', () => {
     expect(result.payload.id).toBe(1);
   });
 
-
-
   it('should create patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.createPatient<{ payload: { id: number } }>({ name: 'New Patient' });
 
-    expect(requestSpy).toHaveBeenCalledWith('POST', '/patient', { name: 'New Patient' }, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'POST',
+      '/patient',
+      { name: 'New Patient' },
+      undefined,
+      undefined,
+    );
     expect(result.payload.id).toBe(2);
   });
 
-
-
   it('should update patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.updatePatient<{ payload: { id: number } }>(1, { name: 'Updated Patient' });
+    const result = await sdk.updatePatient<{ payload: { id: number } }>(1, {
+      name: 'Updated Patient',
+    });
 
-    expect(requestSpy).toHaveBeenCalledWith('PUT', '/patient/1', { name: 'Updated Patient' }, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'PUT',
+      '/patient/1',
+      { name: 'Updated Patient' },
+      undefined,
+      undefined,
+    );
     expect(result.payload.id).toBe(1);
   });
-
-
 
   it('should delete patient', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.deletePatient<{ payload: { success: boolean } }>(1);
 
-    expect(requestSpy).toHaveBeenCalledWith('DELETE', '/patient/1', undefined, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'DELETE',
+      '/patient/1',
+      undefined,
+      undefined,
+      undefined,
+    );
     expect(result.payload.success).toBe(true);
   });
 
@@ -288,7 +318,13 @@ describe('MendSdk Convenience Methods', () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.getAppointment<{ payload: { id: number } }>(1);
 
-    expect(requestSpy).toHaveBeenCalledWith('GET', '/appointment/1', undefined, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'GET',
+      '/appointment/1',
+      undefined,
+      undefined,
+      undefined,
+    );
     expect(result.payload.id).toBe(1);
   });
 
@@ -297,7 +333,13 @@ describe('MendSdk Convenience Methods', () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.createAppointment<{ payload: { id: number } }>(appointmentData);
 
-    expect(requestSpy).toHaveBeenCalledWith('POST', '/appointment', appointmentData, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'POST',
+      '/appointment',
+      appointmentData,
+      undefined,
+      undefined,
+    );
     expect(result.payload.id).toBe(2);
   });
 
@@ -312,23 +354,45 @@ describe('MendSdk Convenience Methods', () => {
 
   it('should create patient with force flag', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createPatient<{ payload: { force: boolean } }>({ name: 'Forced Patient' }, true);
+    const result = await sdk.createPatient<{ payload: { force: boolean } }>(
+      { name: 'Forced Patient' },
+      true,
+    );
 
-    expect(requestSpy).toHaveBeenCalledWith('POST', '/patient/force', { name: 'Forced Patient' }, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'POST',
+      '/patient/force',
+      { name: 'Forced Patient' },
+      undefined,
+      undefined,
+    );
     expect(result.payload.force).toBe(true);
   });
 
   it('should update patient with force flag', async () => {
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.updatePatient<{ payload: { force: boolean } }>(1, { name: 'Forced Update' }, true);
+    const result = await sdk.updatePatient<{ payload: { force: boolean } }>(
+      1,
+      { name: 'Forced Update' },
+      true,
+    );
 
-    expect(requestSpy).toHaveBeenCalledWith('PUT', '/patient/1/force', { name: 'Forced Update' }, undefined, undefined);
+    expect(requestSpy).toHaveBeenCalledWith(
+      'PUT',
+      '/patient/1/force',
+      { name: 'Forced Update' },
+      undefined,
+      undefined,
+    );
     expect(result.payload.force).toBe(true);
   });
 
   it('should throw on 404 when switching organization', async () => {
     server.use(
-      http.put('https://api.example.com/session/org/:orgId', () => new HttpResponse(null, { status: 404 }))
+      http.put(
+        'https://api.example.com/session/org/:orgId',
+        () => new HttpResponse(null, { status: 404 }),
+      ),
     );
 
     await expect(sdk.switchOrg(999)).rejects.toMatchObject({
@@ -336,6 +400,4 @@ describe('MendSdk Convenience Methods', () => {
       code: ERROR_CODES.HTTP_ERROR,
     });
   });
-
-
 });
