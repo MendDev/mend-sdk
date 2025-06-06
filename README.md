@@ -72,7 +72,7 @@ await sdk.submitMfaCode('123456');
 
 ```tsx
 import { useEffect, useState } from 'react';
-import MendSdk from '@menddev/sdk';
+import MendSdk, { Json, User } from '@menddev/sdk';
 
 const sdk = new MendSdk({
   apiEndpoint: import.meta.env.VITE_MEND_API,
@@ -82,14 +82,14 @@ const sdk = new MendSdk({
 });
 
 export function UserCard({ id }: { id: number }) {
-  const [user, setUser] = useState<any>();
+  const [user, setUser] = useState<Json<{ payload: { user: User } }> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const abort = new AbortController();
 
-    sdk
-      .getUser(id, abort.signal)
+  sdk
+      .getUser<Json<{ payload: { user: User } }>>(id, abort.signal)
       .then(setUser)
       .catch((err) => {
         if (err.name !== 'AbortError') setError(err.message);

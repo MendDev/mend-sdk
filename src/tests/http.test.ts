@@ -48,12 +48,17 @@ const server = setupServer(
   
   // Handler for testing headers
   http.get('https://api.example.com/headers', ({ request }) => {
-    return HttpResponse.json({ 
+    return HttpResponse.json({
       headers: {
         'x-custom-header': request.headers.get('x-custom-header'),
         'content-type': request.headers.get('content-type')
       }
     });
+  }),
+
+  // Handler returning invalid JSON
+  http.get('https://api.example.com/badjson', () => {
+    return new HttpResponse('not-json', { headers: { 'content-type': 'application/json' } });
   }),
   
   // Handler for testing empty responses
@@ -190,5 +195,11 @@ describe('HttpClient', () => {
     }
 
     fetchSpy.mockRestore();
+  });
+
+  it('should wrap JSON parse errors in MendError', async () => {
+    const client = createHttpClient({ apiEndpoint: 'https://api.example.com' });
+
+    await expect(client.fetch('GET', '/badjson')).rejects.toBeInstanceOf(MendError);
   });
 });

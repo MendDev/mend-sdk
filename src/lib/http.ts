@@ -134,8 +134,19 @@ export class HttpClient {
     }
 
     /* Some endpoints return empty body (204). Attempt JSON parse only when content exists. */
-    const text = await resp.text();
-    return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
+    try {
+      const text = await resp.text();
+      if (!text) return undefined as unknown as T;
+      return JSON.parse(text) as T;
+    } catch (err) {
+      throw new MendError(
+        (err as Error).message,
+        ERROR_CODES.HTTP_ERROR,
+        resp.status,
+        undefined,
+        context,
+      );
+    }
   }
 }
 
