@@ -1,4 +1,4 @@
-import { MendError, ERROR_CODES } from './errors';
+import { MendError, ERROR_CODES, ErrorCode } from './errors';
 
 /**
  * HTTP verb types supported by the API
@@ -89,6 +89,9 @@ export class HttpClient {
         signal,
       });
     } catch (err) {
+      if ((err as Error).name === 'AbortError') {
+        throw err;
+      }
       throw new MendError(
         (err as Error).message,
         ERROR_CODES.HTTP_ERROR,
