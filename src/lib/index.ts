@@ -122,7 +122,7 @@ export class MendSdk {
     }
 
     if (this.mfaCode !== undefined) {
-      await this.submitMfaCode(this.mfaCode);
+      await this.submitMfaCode(this.mfaCode, undefined);
       return;
     }
 
@@ -150,11 +150,9 @@ export class MendSdk {
         const orgs = await this.listOrgs<ListOrgsResponse>();
         this.availableOrgs = orgs.payload.orgs;
       }
-      if (Array.isArray(this.availableOrgs) && this.availableOrgs.length === 1) {
-        const first = this.availableOrgs[0] as Org;
-        const id = first.id ?? first.orgId;
-        if (id) await this.switchOrg(id);
-      }
+      // When no organization is pre-selected, callers can choose which org to
+      // use. Avoid automatic switching to prevent unexpected network requests
+      // during initialization.
     }
   }
 
@@ -185,7 +183,7 @@ export class MendSdk {
     method: HttpVerb,
     path: string,
     body: unknown,
-    query: Record<string, string | number | boolean>,
+    query: QueryParams,
     headers: Record<string, string>,
     signal?: AbortSignal,
   ): Promise<T> {
@@ -416,7 +414,7 @@ export class MendSdk {
     // This bypasses ensureAuth, but still needs the current token if available
     const authHeaders = this.buildAuthHeaders();
     
-    const res = await this.httpClient.fetch<Json<unknown>>(
+    const res = await this.httpClient.fetch<AuthResponse>(
       'PUT',
       '/session/mfa',
       { mfaCode: code },
@@ -436,15 +434,8 @@ export class MendSdk {
    * @param signal - Optional abort signal
    */
   public async switchOrg(orgId: number, signal?: AbortSignal): Promise<void> {
-    try {
-      await this.request<Json<unknown>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
-      this.activeOrgId = orgId;
-    } catch (err) {
-      if (err instanceof MendError && err.status === 404) {
-        throw new MendError(err.message, ERROR_CODES.ORG_NOT_FOUND, err.status, err.details);
-      }
-      throw err;
-    }
+    await this.request<Json<unknown>>('PUT', `/session/org/${orgId}`, {}, undefined, signal);
+    this.activeOrgId = orgId;
   }
 
   /**

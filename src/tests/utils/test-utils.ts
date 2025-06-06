@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { MendSdk } from '../../lib/index';
 import { afterEach, beforeEach, vi } from 'vitest';
-import { HttpClient, HttpVerb } from '../../lib/http';
+import { HttpClient, HttpVerb, QueryParams } from '../../lib/http';
 
 // Standard mock responses
 export const mockResponses = {
@@ -318,7 +318,7 @@ export function createMockHttpClient() {
   beforeEach(() => {
     // Spy on the HttpClient.fetch method
     vi.spyOn(HttpClient.prototype, 'fetch').mockImplementation(
-      function(this: HttpClient, method: HttpVerb, path: string, body?: unknown, query?: Record<string, string | number | boolean>, headers?: Record<string, string>, signal?: AbortSignal) {
+      function(this: HttpClient, method: HttpVerb, path: string, body?: unknown, query?: QueryParams, headers?: Record<string, string>, signal?: AbortSignal) {
         // For testing, always return a successful response for any unhandled request
         // This prevents actual network requests from being made
         console.log(`[Mock HttpClient] ${method} ${path}`);
