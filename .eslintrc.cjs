@@ -14,6 +14,9 @@ module.exports = {
     node: true,
     es2021: true,
   },
+  parserOptions: {
+    project: ['./tsconfig.eslint.json'],
+  },
   rules: {
     // === UNUSED CODE DETECTION ===
     '@typescript-eslint/no-unused-vars': ['warn', {
