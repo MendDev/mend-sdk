@@ -227,14 +227,26 @@ export class MendSdk {
   /* ------------------------------------------------------------------------------------------ */
 
   /**
-   * Make a request to the API with authentication handling
-   * 
+   * Make an authenticated request to the API.
+   *
+   * The method automatically refreshes the JWT if the first attempt
+   * returns a `401` response and retries the request once. Endpoints that
+   * return an empty body (e.g. HTTP 204) resolve to `undefined`.
+   *
    * ```ts
    * const response = await sdk.request('GET', '/user/me');
    * const ctrl = new AbortController();
    * const response2 = await sdk.request('GET', '/patients', null, {}, ctrl.signal);
    * // ctrl.abort();
    * ```
+   *
+   * @param method - HTTP method to perform
+   * @param path - API path beginning with '/'
+   * @param body - Optional JSON serialisable payload
+   * @param query - Query string parameters
+   * @param signal - Optional abort controller signal
+   * @returns Parsed JSON response from the server
+   * @throws {@link MendError} wrapping network or server failures
    */
   public async request<T = Json<unknown>>(
     method: HttpVerb,
@@ -310,6 +322,9 @@ export class MendSdk {
    *
    * @param id - Patient ID
    * @param signal - Optional abort signal
+   *
+   * Throws a {@link MendError} with `HTTP_ERROR` code when the
+   * patient cannot be found (404).
    */
   public async getPatient<T = Json<unknown>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('GET', `/patient/${id}`, undefined, undefined, signal);
@@ -328,7 +343,9 @@ export class MendSdk {
   /**
    * Create a new patient record.
    *
-   * @param payload - Patient data
+   * @param payload - Patient data to send in the request body. This should
+   *   include fields accepted by the `/patient` API such as
+   *   `firstName`, `lastName`, `email`, etc.
    * @param force - Bypass age or validation checks
    * @param signal - Optional abort signal
    */
@@ -341,7 +358,8 @@ export class MendSdk {
    * Update an existing patient record.
    *
    * @param id - Patient ID
-   * @param payload - Fields to update
+   * @param payload - Fields to update. Provide only the keys to modify
+   *   (e.g. `mobile`, `email`).
    * @param force - Ignore update limits
    * @param signal - Optional abort signal
    */
@@ -355,6 +373,8 @@ export class MendSdk {
    *
    * @param id - Patient ID
    * @param signal - Optional abort signal
+   *
+   * Throws a {@link MendError} if the patient does not exist.
    */
   public async deletePatient<T = Json<unknown>>(id: number, signal?: AbortSignal): Promise<T> {
     return this.request<T>('DELETE', `/patient/${id}`, undefined, undefined, signal);
