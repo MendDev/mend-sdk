@@ -106,3 +106,58 @@ export interface AppointmentPayload {
   appointmentEmrId?: string;
   externalEmrId?: string;
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Provider Availability helper types
+ * -------------------------------------------------------------------------------------------*/
+
+export interface ProviderEvent {
+  /** Event ID */
+  id: number;
+  /** UTC – "YYYY-MM-DD HH:mm:ss" */
+  startDate: string;
+  /** UTC – "YYYY-MM-DD HH:mm:ss" */
+  endDate: string;
+  /** Event label, usually "Available" */
+  type?: string;
+  /** Additional unknown props (API is flexible) */
+  [key: string]: unknown;
+}
+
+/** Partial Provider object returned by /provider endpoints */
+export interface Provider {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  /** Events array is only included when querying with startDate/endDate */
+  events?: ProviderEvent[];
+  /** Other dynamic keys */
+  [key: string]: unknown;
+}
+
+export interface Slot {
+  /** UTC – ISO string */
+  startDate: string;
+  /** UTC – ISO string */
+  endDate: string;
+}
+
+export interface ProviderAvailabilityOptions {
+  /** ISO string (UTC) */
+  startDate: string;
+  /** ISO string (UTC) */
+  endDate: string;
+  /** Optional – additional filtering */
+  appointmentTypeId?: number;
+  patientAge?: number;
+  locationId?: number;
+  /** When true include `forceRestrictProviders=1` query */
+  restrictPreviousProviders?: boolean;
+  /** Optional abort controller */
+  signal?: AbortSignal;
+}
+
+export interface ProviderAvailabilityResult {
+  providerId: number;
+  slots: Slot[];
+}

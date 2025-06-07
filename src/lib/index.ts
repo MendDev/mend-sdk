@@ -19,6 +19,11 @@ import {
   ListOrgsResponse,
   CreatePatientPayload,
   AppointmentPayload,
+  Provider,
+  ProviderEvent,
+  ProviderAvailabilityOptions,
+  ProviderAvailabilityResult,
+  Slot,
 } from './types';
 
 // Why 55 minutes? Because JWTs expire after 1 hour, and we want to give
@@ -67,6 +72,10 @@ export type {
   ListOrgsResponse,
   CreatePatientPayload,
   AppointmentPayload,
+  Provider,
+  ProviderEvent,
+  ProviderAvailabilityOptions,
+  ProviderAvailabilityResult,
 } from './types';
 
 /* ------------------------------------------------------------------------------------------------
@@ -627,6 +636,196 @@ export class MendSdk {
   public logout(): void {
     this.jwt = null;
     this.jwtExpiresAt = 0;
+  }
+
+  /* ------------------------------------------------------------------------------------------ */
+  /* Provider Helpers                                                                          */
+  /* ------------------------------------------------------------------------------------------ */
+
+  /**
+   * Fetch a single provider by ID (GET /provider/{id}).
+   */
+  public async getProvider<T = Json<Provider>>(id: number | string, signal?: AbortSignal): Promise<T> {
+    return this.request<T>('GET', `/provider/${id}`, undefined, undefined, signal);
+  }
+
+  /**
+   * List providers (GET /provider) with optional paging/filtering.
+   */
+  public async listProviders<T = Json<{ providers: Provider[] }>>(
+    query: QueryParams = {},
+    signal?: AbortSignal,
+  ): Promise<T> {
+    return this.request<T>('GET', '/provider', undefined, query, signal);
+  }
+
+  /**
+   * Internal helper – subtract booked appointments from availability events
+   */
+  private computeFreeSlots(events: ProviderEvent[], appts: { startDate: string; endDate: string }[]): Slot[] {
+    if (!events?.length) return [];
+
+    // Ensure appointments are sorted by startDate
+    const sortedAppts = [...appts].sort((a, b) =>
+      a.startDate.localeCompare(b.startDate),
+    );
+
+    const slots: Slot[] = [];
+
+    const toDate = (s: string): Date => {
+      if (s.includes('T')) return new Date(s);
+      return new Date(s.replace(' ', 'T') + 'Z');
+    };
+
+    for (const ev of events) {
+      let curStart = toDate(ev.startDate).getTime();
+      const evEnd = toDate(ev.endDate).getTime();
+
+      for (const appt of sortedAppts) {
+        const aStart = toDate(appt.startDate).getTime();
+        const aEnd = toDate(appt.endDate).getTime();
+
+        if (aEnd <= curStart || aStart >= evEnd) continue; // no overlap
+
+        if (aStart > curStart) {
+          slots.push({ startDate: new Date(curStart).toISOString(), endDate: new Date(aStart).toISOString() });
+        }
+        curStart = Math.max(curStart, aEnd);
+        if (curStart >= evEnd) break;
+      }
+
+      if (curStart < evEnd) {
+        slots.push({ startDate: new Date(curStart).toISOString(), endDate: new Date(evEnd).toISOString() });
+      }
+    }
+
+    return slots;
+  }
+
+  /**
+   * Retrieve availability for a single provider by merging their events and existing appointments.
+   *
+   * This is a simplified helper for consumers who only need raw free intervals.
+   */
+  public async getProviderAvailability(
+    providerId: number | string,
+    opts: ProviderAvailabilityOptions,
+  ): Promise<ProviderAvailabilityResult> {
+    if (!opts?.startDate || !opts?.endDate) {
+      throw new MendError('startDate and endDate are required', ERROR_CODES.SDK_CONFIG);
+    }
+
+    const queryEvents: QueryParams = {
+      startDate: opts.startDate,
+      endDate: opts.endDate,
+    };
+
+    // Fetch events directly from /provider/:id with date filter
+    const providerRes = await this.request<Json<{ payload: { provider: Provider } }>>( // cast any for flexibility
+      'GET',
+      `/provider/${providerId}`,
+      undefined,
+      queryEvents,
+      opts.signal,
+    );
+    const providerObj = (providerRes as any).payload?.provider as Provider;
+    const events = Array.isArray(providerObj?.events) ? providerObj.events : [];
+
+    // Fetch appointments
+    const queryAppts: QueryParams = {
+      'canceled[]': 0,
+      'deleted[]': 0,
+      excludeTypes: 'Assessment,Messaging',
+      providerId: String(providerId),
+      startDate: opts.startDate,
+      endDate: opts.endDate,
+    };
+    const sched = await this.request<Json<{ payload: { schedule: { startDate: string; endDate: string }[] } }>>(
+      'GET',
+      '/appointment/schedule',
+      undefined,
+      queryAppts,
+      opts.signal,
+    );
+    const appts = ((sched as any).payload?.schedule ?? []) as { startDate: string; endDate: string }[];
+
+    const slots = this.computeFreeSlots(events, appts);
+
+    return { providerId: Number(providerId), slots };
+  }
+
+  /**
+   * High-level helper that mimics Mend's UI search for providers + availability.
+   * This executes a single API call (or two when expanding range) and returns
+   * the raw provider list the same way the API does, but with a helpful
+   * `message` similar to the reference algorithm.
+   */
+  public async findAvailableProviders(
+    opts: {
+      appointmentTypeId: number | string;
+      eventStartDate: string;
+      eventEndDate: string;
+      patientAge: number;
+      locationId?: number | string;
+      page?: number;
+      limit?: number;
+    },
+    signal?: AbortSignal,
+  ): Promise<Json<{ providers: Provider[]; message: string }>> {
+    const {
+      appointmentTypeId,
+      eventStartDate,
+      eventEndDate,
+      patientAge,
+      locationId,
+      page = 1,
+      limit = 10,
+    } = opts;
+
+    if (!appointmentTypeId || !eventStartDate || !eventEndDate) {
+      throw new MendError('appointmentTypeId, eventStartDate, and eventEndDate are required', ERROR_CODES.SDK_CONFIG);
+    }
+
+    const baseQuery: QueryParams = {
+      order: 'firstAvailableSlot DESC',
+      page,
+      limit,
+      showInAppointmentFlow: 1,
+      appointmentTypeId,
+      providerAvailability: 1,
+      eventStartDate,
+      eventEndDate,
+      patientAge,
+    };
+    if (locationId !== undefined) baseQuery.locationId = locationId;
+
+    let resp = await this.request<Json<{ payload: { providers: Provider[] } }>>(
+      'GET',
+      '/provider',
+      undefined,
+      baseQuery,
+      signal,
+    );
+
+    let providersWithSlots = ((resp as any).payload?.providers ?? []).filter((p: any) => p.availableSlots?.length);
+    let aiFeedback =
+      'Only offer dates/times that are in the provided results below. Offer the user date(s) and time(s) from the results below. Always offer based on the users preferences, the dates and times closest to their preferences, or the soonest available.';
+
+    if (providersWithSlots.length === 0) {
+      // Expand date range by +7 days
+      const expandedQuery = { ...baseQuery, eventEndDate: new Date(new Date(eventEndDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() };
+      resp = await this.request<Json<{ payload: { providers: Provider[] } }>>('GET', '/provider', undefined, expandedQuery, signal);
+      providersWithSlots = ((resp as any).payload?.providers ?? []).filter((p: any) => p.availableSlots?.length);
+      if (providersWithSlots.length) {
+        aiFeedback += ' There was no availability in the initial range. The options below are in an expanded range closest to the original request.';
+      }
+    }
+
+    return {
+      success: true,
+      message: aiFeedback,
+      providers: providersWithSlots,
+    } as unknown as Json<{ providers: Provider[]; message: string }>;
   }
 }
 
