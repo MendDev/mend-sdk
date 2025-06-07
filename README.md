@@ -192,7 +192,7 @@ const sdk = new MendSdk({
 | `searchPatients(query)`                         | Search patients with filters           |
 | `getPatient(id)`                                | Get a patient record                   |
 | `getPatientAssessmentScores(id)`                | Retrieve a patient's assessment scores |
-| `createPatient(payload, force?)`                | Create a new patient                   |
+| `createPatient(payload, force?)`                | Create a new patient *(rarely pass `force=true`; only when directed by Mend support)* |
 | `updatePatient(id, payload, force?)`            | Update an existing patient             |
 | `deletePatient(id)`                             | Delete a patient                       |
 | `getAppointment(id)`                            | Retrieve an appointment                |
@@ -203,6 +203,11 @@ const sdk = new MendSdk({
 | `getProperties()`                               | Fetch all application properties       |
 | `getProperty(key)`                              | Retrieve a single property value       |
 | `logout()`                                      | Clear authentication state             |
+| `listUsers(query)`                              | List all users                         |
+| `listUsersByRole(role, query)`                  | List users filtered by role            |
+| `createUser(payload)`                           | Create a user                          |
+| `updateUser(id, payload)`                       | Update a user                          |
+| `updateUserTimezone(id, tz, force?)`            | Update a user's timezone               |
 
 ### Troubleshooting
 
@@ -215,6 +220,54 @@ inspecting network traffic with a debugging proxy can help isolate issues.
 
 The SDK exposes helper methods covering all `/patient` routes. Searching accepts
 any of the query parameters supported by the API (see below).
+
+### Create a patient – required vs optional fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `firstName` | ✅ | — |
+| `lastName`  | ✅ | — |
+| `birthDate` | ✅ | `YYYY-MM-DD` |
+| `gender`    | ✅ | `MALE`, `FEMALE`, `OTHER`, `UNSPECIFIED` |
+| `email`     | ✅ | Unique per Mend environment |
+| `mobile`    | ❌ | E.164 format |
+| `country`   | ❌ | Defaults to `US` if omitted and address lines present |
+| `state`, `city`, `street`, `street2`, `postal` | ❌ | Required **only** when org policy `requirePatientAddress` = `1` |
+| `language`  | ❌ | ISO-639-1 e.g. `en`, `es` |
+| `orgId`     | ❌ | Needed when creating patients across orgs |
+| `sendInvite`| ❌ | Default `true` – email invite to portal |
+| `force`     | auto | The SDK can inject this internally **only when explicitly instructed** (most integrations should ignore this) |
+
+Example minimal request:
+```ts
+await sdk.createPatient({
+  firstName: 'Jane',
+  lastName: 'Doe',
+  birthDate: '1990-01-01',
+  gender: 'FEMALE',
+  email: 'jane.doe@example.com',
+});
+```
+
+Example full request with full address:
+
+```ts
+await sdk.createPatient({
+  firstName: 'Anna',
+  lastName: 'Smith',
+  birthDate: '1985-07-04',
+  gender: 'FEMALE',
+  email: 'anna.smith@example.com',
+  mobile: '+14075551234',
+  country: 'US',
+  state: 'FL',
+  city: 'Orlando',
+  street: '123 Main St',
+  street2: 'Apt 4B',
+  postal: '32801',
+  language: 'en',
+});
+```
 
 ### Search patients
 
@@ -299,6 +352,14 @@ const active = await sdk.getOrg(456);
 
 Use `listOrgs()` to view accessible organizations and `switchOrg()` to change
 which organization subsequent requests operate against.
+
+## Changelog
+
+### [1.1.0] – 2025-06-07
+* **createPatient** always hits `POST /patient`; when `force=true` it injects `"force":1` into the JSON body.
+* Added comprehensive required/optional field table and examples.
+* Added user-management helpers (`listUsers`, `createUser`, etc.).
+* Enforced HTTPS rule documented.
 
 ## Development
 

@@ -10,7 +10,15 @@
 import { MendError, ERROR_CODES } from './errors';
 import { HttpClient, HttpVerb, Json, QueryParams, createHttpClient } from './http';
 import { Mutex } from './mutex';
-import { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
+import {
+  Org,
+  User,
+  Patient,
+  AuthResponse,
+  PropertiesResponse,
+  ListOrgsResponse,
+  CreatePatientPayload,
+} from './types';
 
 // Why 55 minutes? Because JWTs expire after 1 hour, and we want to give
 // some buffer time and avoid edge cases.
@@ -56,6 +64,7 @@ export type {
   AuthResponse,
   PropertiesResponse,
   ListOrgsResponse,
+  CreatePatientPayload,
 } from './types';
 
 /* ------------------------------------------------------------------------------------------------
@@ -294,6 +303,80 @@ export class MendSdk {
   }
 
   /**
+   * List all users.
+   *
+   * @param query - Optional query / paging parameters
+   * @param signal - Optional abort signal
+   */
+  public async listUsers<T = Json<unknown>>(
+    query: QueryParams = {},
+    signal?: AbortSignal,
+  ): Promise<T> {
+    return this.request<T>('GET', '/user', undefined, query, signal);
+  }
+
+  /**
+   * List users filtered by role.
+   *
+   * @param role - Role name (e.g. 'Patient', 'Admin')
+   * @param query - Optional query / paging parameters
+   * @param signal - Optional abort signal
+   */
+  public async listUsersByRole<T = Json<unknown>>(
+    role: string,
+    query: QueryParams = {},
+    signal?: AbortSignal,
+  ): Promise<T> {
+    return this.request<T>('GET', `/user/${encodeURIComponent(role)}`, undefined, query, signal);
+  }
+
+  /**
+   * Create a new user.
+   *
+   * @param payload - User data (see API docs)
+   * @param signal - Optional abort signal
+   */
+  public async createUser<T = Json<unknown>>(
+    payload: Json<unknown>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    return this.request<T>('POST', '/user', payload, undefined, signal);
+  }
+
+  /**
+   * Update an existing user.
+   *
+   * @param id - User ID
+   * @param payload - Fields to update
+   * @param signal - Optional abort signal
+   */
+  public async updateUser<T = Json<unknown>>(
+    id: number,
+    payload: Json<unknown>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    return this.request<T>('PUT', `/user/${id}`, payload, undefined, signal);
+  }
+
+  /**
+   * Update a user's timezone.
+   *
+   * @param id - User ID
+   * @param timeZone - IANA / PHP compatible timezone string (e.g. 'America/New_York')
+   * @param force - Pass `true` to override an existing timezone
+   * @param signal - Optional abort signal
+   */
+  public async updateUserTimezone<T = Json<unknown>>(
+    id: number,
+    timeZone: string,
+    force = false,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const body: Json<unknown> = force ? { timeZone, forceTimezoneUpdate: true } : { timeZone };
+    return this.request<T>('PUT', `/user/${id}`, body, undefined, signal);
+  }
+
+  /**
    * Search patients using any supported query parameters.
    *
    * @param query - Search filters and paging options
@@ -342,12 +425,12 @@ export class MendSdk {
    * @param signal - Optional abort signal
    */
   public async createPatient<T = Json<unknown>>(
-    payload: Json<unknown>,
+    payload: CreatePatientPayload,
     force = false,
     signal?: AbortSignal,
   ): Promise<T> {
-    const path = force ? '/patient/force' : '/patient';
-    return this.request<T>('POST', path, payload, undefined, signal);
+    const body = force ? { ...payload, force: 1 } : payload;
+    return this.request<T>('POST', '/patient', body, undefined, signal);
   }
 
   /**

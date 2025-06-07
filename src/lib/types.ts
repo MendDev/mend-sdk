@@ -34,3 +34,47 @@ export interface ListOrgsResponse {
     readonly orgs: Org[];
   };
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Patient-creation helper types
+ * -------------------------------------------------------------------------------------------*/
+
+export interface Address {
+  country?: string;
+  state?: string;
+  city?: string;
+  street?: string;
+  street2?: string;
+  postal?: string;
+  /** defaults to "Home" when omitted */
+  type?: string;
+}
+
+export interface CreatePatientPayload {
+  /* Required */
+  firstName: string;
+  lastName: string;
+  birthDate: string; // YYYY-MM-DD
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | 'UNSPECIFIED';
+  email: string;
+
+  /* Optional */
+  mobile?: string;
+  country?: string;
+  state?: string;
+  street?: string;
+  street2?: string;
+  city?: string;
+  postal?: string;
+  language?: string;
+  orgId?: number;
+  contact?: string;
+  addresses?: Address[];
+  sendInvite?: boolean;
+
+  /**
+   * Force flag added automatically by the SDK when caller specifies `force=true`.
+   * Do not set manually.
+   */
+  force?: 1;
+}
