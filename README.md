@@ -210,6 +210,8 @@ const sdk = new MendSdk({
 | `createUser(payload)`                           | Create a user                                                                         |
 | `updateUser(id, payload)`                       | Update a user                                                                         |
 | `updateUserTimezone(id, tz, force?)`            | Update a user's timezone                                                              |
+| `lookupPhoneNumbers(payload)`                   | Determine if numbers are SMS-capable  |
+| `checkUserExists(payload)`                      | Check if email/phone already exists  |
 
 ### Troubleshooting
 

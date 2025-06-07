@@ -161,3 +161,36 @@ export interface ProviderAvailabilityResult {
   providerId: number;
   slots: Slot[];
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Phone lookup / user-exists helper types
+ * -------------------------------------------------------------------------------------------*/
+
+export interface PhoneLookupRequest {
+  /** Array of E.164 strings or raw numbers */
+  numbers: (string | number)[];
+}
+
+export interface PhoneLookupResult {
+  id: number;
+  orgId: number;
+  phoneNumber: string;
+  isMobile: 0 | 1;
+  validated: 0 | 1;
+  suppress: 0 | 1 | null;
+  created?: string;
+  updated?: string;
+  deleted?: 0 | 1 | null;
+  [extra: string]: unknown;
+}
+
+export interface UserExistsRequest {
+  'email-or-phone': string;
+  'g-recaptcha-response'?: string;
+  orgId: number;
+  patientOnly?: boolean;
+}
+
+export interface UserExistsResponse {
+  exists: 0 | 1;
+}

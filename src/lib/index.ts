@@ -24,6 +24,10 @@ import {
   ProviderAvailabilityOptions,
   ProviderAvailabilityResult,
   Slot,
+  PhoneLookupRequest,
+  PhoneLookupResult,
+  UserExistsRequest,
+  UserExistsResponse,
 } from './types';
 
 // Why 55 minutes? Because JWTs expire after 1 hour, and we want to give
@@ -76,6 +80,11 @@ export type {
   ProviderEvent,
   ProviderAvailabilityOptions,
   ProviderAvailabilityResult,
+  Slot,
+  PhoneLookupRequest,
+  PhoneLookupResult,
+  UserExistsRequest,
+  UserExistsResponse,
 } from './types';
 
 /* ------------------------------------------------------------------------------------------------
@@ -826,6 +835,36 @@ export class MendSdk {
       message: aiFeedback,
       providers: providersWithSlots,
     } as unknown as Json<{ providers: Provider[]; message: string }>;
+  }
+
+  /* ------------------------------------------------------------------------------------------ */
+  /* Phone number lookup & user-exists                                                          */
+  /* ------------------------------------------------------------------------------------------ */
+
+  /**
+   * Determine whether phone numbers are SMS-capable (PUT /phone/lookup).
+   */
+  public async lookupPhoneNumbers<T = Json<{ numbers: PhoneLookupResult[] }>>(
+    payload: PhoneLookupRequest,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    if (!payload?.numbers?.length) {
+      throw new MendError('numbers array is required', ERROR_CODES.SDK_CONFIG);
+    }
+    return this.request<T>('PUT', '/phone/lookup', payload, undefined, signal);
+  }
+
+  /**
+   * Check if a user already exists by email or phone (PUT /user/exists).
+   */
+  public async checkUserExists<T = Json<{ user: UserExistsResponse }>>(
+    payload: UserExistsRequest,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    if (!payload?.['email-or-phone'] || !payload?.orgId) {
+      throw new MendError('"email-or-phone" and orgId are required', ERROR_CODES.SDK_CONFIG);
+    }
+    return this.request<T>('PUT', '/user/exists', payload, undefined, signal);
   }
 }
 
