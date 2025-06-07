@@ -78,3 +78,31 @@ export interface CreatePatientPayload {
    */
   force?: 1;
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Appointment-creation helper types
+ * -------------------------------------------------------------------------------------------*/
+
+export interface AppointmentPayload {
+  /* Required */
+  patientId: number;
+  providerId: number;
+  appointmentTypeId: number;
+  startDate: string; // UTC – "YYYY-MM-DD HH:mm:ss"
+  endDate: string;   // UTC – "YYYY-MM-DD HH:mm:ss"
+
+  /* Optional but common */
+  optimized?: 1; // Injected by SDK
+  notify?: 0 | 1;
+  approved?: 0 | 1;
+  symptoms?: { content: string }[];
+  wardId?: number;
+  addressId?: number;
+  assessmentIds?: number[];
+  checkInDate?: string;
+  appointmentStatusId?: number;
+  canceled?: 0 | 1;
+  noShow?: 0 | 1;
+  appointmentEmrId?: string;
+  externalEmrId?: string;
+}

@@ -197,6 +197,8 @@ const sdk = new MendSdk({
 | `deletePatient(id)`                             | Delete a patient                       |
 | `getAppointment(id)`                            | Retrieve an appointment                |
 | `createAppointment(payload)`                    | Create an appointment                  |
+| `listAvailableSlots(opts)`                      | Fetch available appointment slots      |
+| `getAppointmentType(id)`                        | Retrieve appointment-type details      |
 | `listOrgs()`                                    | List accessible organizations          |
 | `submitMfaCode(code)`                           | Complete MFA authentication            |
 | `switchOrg(orgId)`                              | Change the active organization         |
@@ -353,13 +355,69 @@ const active = await sdk.getOrg(456);
 Use `listOrgs()` to view accessible organizations and `switchOrg()` to change
 which organization subsequent requests operate against.
 
+## Appointment helpers
+
+The SDK includes wrappers for `/appointment` and related endpoints.
+
+### Create an appointment – required vs optional fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `patientId` | ✅ | — |
+| `providerId` | ✅ | — |
+| `appointmentTypeId` | ✅ | — |
+| `startDate`, `endDate` | ✅ | UTC `YYYY-MM-DD HH:mm:ss` |
+| `optimized` | auto | SDK injects `1` – **do not set manually** |
+| `notify` | ❌ | Defaults to `1` |
+| `approved` | ❌ | Auto-determined via org property when omitted |
+| `wardId`, `addressId` | ❌ | Ward / location identifiers |
+| `symptoms` | ❌ | `[ { content: 'text' } ]` |
+| `assessmentIds` | ❌ | For combined appointment+assessment calls |
+| `checkInDate`, `appointmentStatusId` | ❌ | On-demand only |
+
+Example minimal request:
+```ts
+await sdk.createAppointment({
+  patientId: 123,
+  providerId: 456,
+  appointmentTypeId: 789,
+  startDate: '2025-07-04 14:00:00', // UTC
+  endDate:   '2025-07-04 14:30:00', // UTC
+});
+```
+
+Example full request:
+```ts
+await sdk.createAppointment({
+  patientId: 123,
+  providerId: 456,
+  appointmentTypeId: 789,
+  startDate: '2025-07-04 14:00:00',
+  endDate:   '2025-07-04 14:30:00',
+  notify: 1,
+  approved: 1,
+  wardId: 33,
+  addressId: 55,
+  symptoms: [{ content: 'Cough, fever' }],
+  assessmentIds: [101, 102],
+});
+```
+
+### List available slots
+```ts
+const slots = await sdk.listAvailableSlots(456, 789, '2025-07-01 00:00:00');
+```
+
+### Get appointment-type details
+```ts
+const type = await sdk.getAppointmentType(789);
+```
+
 ## Changelog
 
-### [1.1.0] – 2025-06-07
-* **createPatient** always hits `POST /patient`; when `force=true` it injects `"force":1` into the JSON body.
-* Added comprehensive required/optional field table and examples.
-* Added user-management helpers (`listUsers`, `createUser`, etc.).
-* Enforced HTTPS rule documented.
+### [1.2.0] – 2025-06-07
+* Added appointment helpers: `createAppointment`, `listAvailableSlots`, `getAppointmentType`.
+* `createAppointment` auto-injects `optimized=1`.
 
 ## Development
 

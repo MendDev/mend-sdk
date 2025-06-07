@@ -18,6 +18,7 @@ import {
   PropertiesResponse,
   ListOrgsResponse,
   CreatePatientPayload,
+  AppointmentPayload,
 } from './types';
 
 // Why 55 minutes? Because JWTs expire after 1 hour, and we want to give
@@ -65,6 +66,7 @@ export type {
   PropertiesResponse,
   ListOrgsResponse,
   CreatePatientPayload,
+  AppointmentPayload,
 } from './types';
 
 /* ------------------------------------------------------------------------------------------------
@@ -333,7 +335,9 @@ export class MendSdk {
   /**
    * Create a new user.
    *
-   * @param payload - User data (see API docs)
+   * @param payload - User data to send in the request body. This should
+   *   include fields accepted by the `/user` API such as
+   *   `firstName`, `lastName`, `email`, etc.
    * @param signal - Optional abort signal
    */
   public async createUser<T = Json<unknown>>(
@@ -478,16 +482,79 @@ export class MendSdk {
   }
 
   /**
-   * Create a new appointment.
+   * Create an appointment (POST /appointment).
+   * The SDK injects { optimized: 1 } automatically.
    *
-   * @param payload - Appointment details
+   * @param payload - Appointment details (see `AppointmentPayload`)
    * @param signal - Optional abort signal
    */
   public async createAppointment<T = Json<unknown>>(
-    payload: Json<unknown>,
+    payload: AppointmentPayload,
     signal?: AbortSignal,
   ): Promise<T> {
-    return this.request<T>('POST', '/appointment', payload, undefined, signal);
+    /* Validate required fields ----------------------------------------------------*/
+    const missing: string[] = [];
+    if (!payload.patientId) missing.push('patientId');
+    if (!payload.providerId) missing.push('providerId');
+    if (!payload.appointmentTypeId) missing.push('appointmentTypeId');
+    if (!payload.startDate) missing.push('startDate');
+    if (!payload.endDate) missing.push('endDate');
+
+    if (missing.length) {
+      throw new MendError(
+        `Missing required fields: ${missing.join(', ')}`,
+        ERROR_CODES.SDK_CONFIG,
+      );
+    }
+
+    /* Auto-inject approved flag when caller omitted it ---------------------------*/
+    let approvedVal = payload.approved;
+    if (approvedVal === undefined) {
+      try {
+        const autoApprove = await this.getProperty<number>('scheduling.patients.autoApprove');
+        approvedVal = autoApprove === 1 ? 1 : 0;
+      } catch {
+        // Swallow – property may not exist; default remains undefined
+      }
+    }
+
+    const body: AppointmentPayload = {
+      optimized: 1,
+      ...payload,
+      ...(approvedVal !== undefined ? { approved: approvedVal } : {}),
+    } as AppointmentPayload;
+
+    return this.request<T>('POST', '/appointment', body, undefined, signal);
+  }
+
+  /**
+   * List available appointment slots for a provider / type.
+   * Thin wrapper around the API – more advanced logic lives in higher layers.
+   */
+  public async listAvailableSlots<T = Json<unknown>>(
+    providerId: number,
+    appointmentTypeId: number,
+    startDate: string,
+    limit = 10,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const query: QueryParams = {
+      providerId,
+      appointmentTypeId,
+      startDate,
+      limit,
+    };
+    return this.request<T>('GET', '/appointment/available-slots', undefined, query, signal);
+  }
+
+  /**
+   * Retrieve appointment-type details.
+   */
+  public async getAppointmentType<T = Json<unknown>>(
+    appointmentTypeId: number,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    return this.request<T>('GET', `/appointment-type/${appointmentTypeId}`, undefined, undefined, signal);
   }
 
   /**
