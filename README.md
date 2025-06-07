@@ -212,6 +212,8 @@ const sdk = new MendSdk({
 | `updateUserTimezone(id, tz, force?)`            | Update a user's timezone                                                              |
 | `lookupPhoneNumbers(payload)`                   | Determine if numbers are SMS-capable  |
 | `checkUserExists(payload)`                      | Check if email/phone already exists  |
+| `listAssessmentSessions(opts)`                  | Fetch outstanding/completed/review-pending assessments |
+| `getAssessmentSession(id)`                      | Retrieve full data for a specific assessment session    |
 
 ### Troubleshooting
 
@@ -418,6 +420,26 @@ const slots = await sdk.listAvailableSlots(456, 789, '2025-07-01 00:00:00');
 
 ```ts
 const type = await sdk.getAppointmentType(789);
+```
+
+## Assessment helpers
+
+The SDK includes wrappers for `/assessment` and related endpoints.
+
+### List assessment sessions
+
+```ts
+// outstanding
+await sdk.listAssessmentSessions({ activeSubjectIds: 4770670, status: 'outstanding' });
+
+// completed & reviewed
+await sdk.listAssessmentSessions({ activeSubjectIds: [4770670, 9103656], status: 'completed' });
+```
+
+### Get assessment session
+
+```ts
+const session = await sdk.getAssessmentSession(123);
 ```
 
 ## Changelog

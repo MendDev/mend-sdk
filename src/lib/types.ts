@@ -194,3 +194,34 @@ export interface UserExistsRequest {
 export interface UserExistsResponse {
   exists: 0 | 1;
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Patient assessments types
+ * -------------------------------------------------------------------------------------------*/
+
+export type AssessmentStatus = 'outstanding' | 'completed' | 'awaitingReview';
+
+export interface AssessmentQueryOptions {
+  /** Single patient id or array */
+  activeSubjectIds: number | number[];
+  status?: AssessmentStatus;
+  page?: number;
+  limit?: number;
+  signal?: AbortSignal;
+}
+
+export interface AssessmentSession {
+  id: number;
+  assessmentType_name: string;
+  completed: string | null;
+  reviewed: string | null;
+  [extra: string]: unknown;
+}
+
+export interface AssessmentPage {
+  sessions: AssessmentSession[];
+  page: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}

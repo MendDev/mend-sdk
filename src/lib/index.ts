@@ -28,6 +28,9 @@ import {
   PhoneLookupResult,
   UserExistsRequest,
   UserExistsResponse,
+  AssessmentQueryOptions,
+  AssessmentSession,
+  AssessmentStatus,
 } from './types';
 
 // Why 55 minutes? Because JWTs expire after 1 hour, and we want to give
@@ -85,6 +88,9 @@ export type {
   PhoneLookupResult,
   UserExistsRequest,
   UserExistsResponse,
+  AssessmentQueryOptions,
+  AssessmentSession,
+  AssessmentStatus,
 } from './types';
 
 /* ------------------------------------------------------------------------------------------------
@@ -865,6 +871,47 @@ export class MendSdk {
       throw new MendError('"email-or-phone" and orgId are required', ERROR_CODES.SDK_CONFIG);
     }
     return this.request<T>('PUT', '/user/exists', payload, undefined, signal);
+  }
+
+  /* ------------------------------------------------------------------------------------------ */
+  /* Assessments                                                                                */
+  /* ------------------------------------------------------------------------------------------ */
+
+  public async listAssessmentSessions<T = Json<{ sessions: AssessmentSession[] }>>(
+    opts: AssessmentQueryOptions,
+  ): Promise<T> {
+    if (!opts?.activeSubjectIds || (Array.isArray(opts.activeSubjectIds) && !opts.activeSubjectIds.length)) {
+      throw new MendError('activeSubjectIds required', ERROR_CODES.SDK_CONFIG);
+    }
+    const ensureArr = (val: number | number[]) => (Array.isArray(val) ? val : [val]);
+    const ids = ensureArr(opts.activeSubjectIds);
+
+    const q: QueryParams = {
+      page: opts.page ?? 1,
+      limit: opts.limit ?? 25,
+      order: opts.status === 'completed' ? 'completed DESC' : 'priority DESC',
+    };
+    q['activeSubjectId[]'] = ids.map(String);
+
+    if (opts.status === 'outstanding') q.completed = 'NULL';
+    if (opts.status === 'completed') {
+      q.completed = '!NULL';
+      q.reviewed = '!NULL';
+    }
+    if (opts.status === 'awaitingReview') {
+      q.completed = '!NULL';
+      q.reviewed = 'NULL';
+    }
+
+    return this.request<T>('GET', '/assessment-session', undefined, q, opts.signal);
+  }
+
+  public async getAssessmentSession<T = Json<{ session: AssessmentSession }>>(
+    sessionId: number,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    if (!sessionId) throw new MendError('sessionId required', ERROR_CODES.SDK_CONFIG);
+    return this.request<T>('GET', `/assessment-session/${sessionId}`, undefined, { detail: 1 }, signal);
   }
 }
 
