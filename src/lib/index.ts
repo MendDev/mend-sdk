@@ -12,6 +12,8 @@ import { HttpClient, HttpVerb, Json, QueryParams, createHttpClient } from './htt
 import { Mutex } from './mutex';
 import { Org, User, Patient, AuthResponse, PropertiesResponse, ListOrgsResponse } from './types';
 
+// Why 55 minutes? Because JWTs expire after 1 hour, and we want to give
+// some buffer time and avoid edge cases.
 export const DEFAULT_TOKEN_TTL_MINUTES = 55;
 export const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 export const DEFAULT_RETRY_ATTEMPTS = 0;
@@ -84,11 +86,7 @@ export class MendSdk {
     }
 
     if (!/^https:\/\//i.test(opts.apiEndpoint)) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new MendError('apiEndpoint must use HTTPS in production', ERROR_CODES.SDK_CONFIG);
-      } else {
-        console.warn('Warning: using a non-HTTPS apiEndpoint');
-      }
+      throw new MendError('apiEndpoint must use HTTPS', ERROR_CODES.SDK_CONFIG);
     }
 
     this.httpClient = createHttpClient({

@@ -151,6 +151,26 @@ try {
 }
 ```
 
+### Security Requirements
+
+#### HTTPS Requirement
+
+For security reasons, all API endpoints must use HTTPS. Attempts to use non-HTTPS endpoints will throw a `MendError` with the `SDK_CONFIG` error code.
+
+```ts
+// This will work
+const sdk = new MendSdk({
+  apiEndpoint: 'https://api.mendfamily.com',
+  // other options...
+});
+
+// This will throw an error
+const sdk = new MendSdk({
+  apiEndpoint: 'http://api.mendfamily.com', // Error: apiEndpoint must use HTTPS
+  // other options...
+});
+```
+
 ### Error codes
 
 | Code               | Meaning                                          |
