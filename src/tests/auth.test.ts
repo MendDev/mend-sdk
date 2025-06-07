@@ -108,14 +108,10 @@ describe('Security features', () => {
     process.env.NODE_ENV = env;
   });
 
-  it('allows http endpoint outside production with warning', () => {
+  it('throws on http endpoint outside production as well', () => {
     const env = process.env.NODE_ENV;
     process.env.NODE_ENV = 'test';
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const sdk = new MendSdk({ apiEndpoint: 'http://api.example.com', email: 'a', password: 'b' });
-    expect(sdk).toBeInstanceOf(MendSdk);
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    expect(() => new MendSdk({ apiEndpoint: 'http://api.example.com', email: 'a', password: 'b' })).toThrow(MendError);
     process.env.NODE_ENV = env;
   });
 

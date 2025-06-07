@@ -59,19 +59,14 @@ const server = setupServer(
     return HttpResponse.json({ payload: [] });
   }),
   http.post('https://api.example.com/patient', async ({ request }) => {
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, any>;
     const url = new URL(request.url);
     const forceParam = url.searchParams.get('force');
 
-    if (forceParam === 'true') {
-      return HttpResponse.json({ payload: { id: 3, name: body.name, force: true } });
+    if (forceParam === 'true' || body.force === 1) {
+      return HttpResponse.json({ payload: { id: 3, firstName: body.firstName, lastName: body.lastName, force: true } });
     }
-    return HttpResponse.json({ payload: { id: 2, name: body.name } });
-  }),
-  // Force create patient path
-  http.post('https://api.example.com/patient/force', async ({ request }) => {
-    const body = (await request.json()) as Record<string, unknown>;
-    return HttpResponse.json({ payload: { id: 3, name: body.name, force: true } });
+    return HttpResponse.json({ payload: { id: 2, firstName: body.firstName, lastName: body.lastName } });
   }),
   http.put('https://api.example.com/patient/:patientId', async ({ request, params }) => {
     const { patientId } = params;
@@ -86,7 +81,6 @@ const server = setupServer(
     }
     return HttpResponse.json({ payload: { id: Number(patientId), name: body.name } });
   }),
-  // Force update patient path
   http.put('https://api.example.com/patient/:patientId/force', async ({ request, params }) => {
     const { patientId } = params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -105,8 +99,14 @@ const server = setupServer(
     });
   }),
   http.post('https://api.example.com/appointment', async ({ request }) => {
-    const body = (await request.json()) as Record<string, unknown>;
-    return HttpResponse.json({ payload: { id: 2, patient_id: body.patient_id, time: body.time } });
+    const body = (await request.json()) as Record<string, any>;
+    return HttpResponse.json({
+      payload: {
+        id: 2,
+        patient_id: body.patientId ?? body.patient_id,
+        time: body.startDate ?? body.time,
+      },
+    });
   }),
 
   // Property endpoints
@@ -270,13 +270,20 @@ describe('MendSdk Convenience Methods', () => {
   });
 
   it('should create patient', async () => {
+    const patientData = {
+      firstName: 'John',
+      lastName: 'Smith',
+      birthDate: '1990-01-01',
+      gender: 'MALE' as const,
+      email: 'john.smith@example.com'
+    };
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createPatient<{ payload: { id: number } }>({ name: 'New Patient' });
+    const result = await sdk.createPatient<{ payload: { id: number } }>(patientData);
 
     expect(requestSpy).toHaveBeenCalledWith(
       'POST',
       '/patient',
-      { name: 'New Patient' },
+      patientData,
       undefined,
       undefined,
     );
@@ -329,14 +336,30 @@ describe('MendSdk Convenience Methods', () => {
   });
 
   it('should create appointment', async () => {
-    const appointmentData = { patient_id: 1, time: '2025-06-01T15:00:00Z' };
-    const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createAppointment<{ payload: { id: number } }>(appointmentData);
+    const appointmentPayload = {
+      patientId: 1,
+      providerId: 2,
+      appointmentTypeId: 3,
+      startDate: '2025-06-01T15:00:00Z',
+      endDate: '2025-06-01T15:30:00Z',
+    };
 
-    expect(requestSpy).toHaveBeenCalledWith(
+    const requestSpy = vi.spyOn(sdk, 'request' as any);
+    const result = await sdk.createAppointment<{ payload: { id: number } }>(appointmentPayload);
+
+    // Auto-approved feature tries to get properties first, so this is the 3rd call
+    expect(requestSpy).toHaveBeenNthCalledWith(
+      3,
       'POST',
       '/appointment',
-      appointmentData,
+      expect.objectContaining({
+        optimized: 1,
+        patientId: 1,
+        providerId: 2,
+        appointmentTypeId: 3,
+        startDate: '2025-06-01T15:00:00Z',
+        endDate: '2025-06-01T15:30:00Z',
+      }),
       undefined,
       undefined,
     );
@@ -353,16 +376,23 @@ describe('MendSdk Convenience Methods', () => {
   });
 
   it('should create patient with force flag', async () => {
+    const patientData = {
+      firstName: 'Jane',
+      lastName: 'Smith',
+      birthDate: '1992-02-02',
+      gender: 'FEMALE' as const,
+      email: 'jane.smith@example.com'
+    };
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.createPatient<{ payload: { force: boolean } }>(
-      { name: 'Forced Patient' },
+      patientData,
       true,
     );
 
     expect(requestSpy).toHaveBeenCalledWith(
       'POST',
-      '/patient/force',
-      { name: 'Forced Patient' },
+      '/patient',
+      { ...patientData, force: 1 },
       undefined,
       undefined,
     );
