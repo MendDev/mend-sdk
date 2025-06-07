@@ -1,6 +1,6 @@
+import { describe, it, expect, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-import MendSdk from '../lib/index';
+import { setupMswServer, createTestSdk } from './utils/test-utils';
 
 const sampleSession = (id: number, completed: boolean, reviewed: boolean) => ({
   id,
@@ -9,7 +9,7 @@ const sampleSession = (id: number, completed: boolean, reviewed: boolean) => ({
   reviewed: reviewed ? '2025-01-02' : null,
 });
 
-const server = setupServer(
+const server = setupMswServer([
   http.get('https://api.example.com/assessment-session', ({ request }) => {
     const url = new URL(request.url);
     const params = Object.fromEntries(url.searchParams.entries());
@@ -25,14 +25,12 @@ const server = setupServer(
     const { id } = params;
     return HttpResponse.json({ payload: { session: sampleSession(Number(id), true, true) } });
   }),
-);
+]);
 
-beforeAll(() => server.listen());
-afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
 describe('Assessment helpers', () => {
-  const sdk = new MendSdk({ apiEndpoint: 'https://api.example.com', email: 'a', password: 'b' });
+  const sdk = createTestSdk();
 
   it('should get outstanding', async () => {
     const res = await sdk.listAssessmentSessions({ activeSubjectIds: 1, status: 'outstanding' });

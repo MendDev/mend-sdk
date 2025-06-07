@@ -2,7 +2,7 @@
 
 ## Dev Environment Tips
 
-- npm install
+- npm ci
 - review package.json
 
 ## Testing Instructions

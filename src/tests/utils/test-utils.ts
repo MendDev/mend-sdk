@@ -9,10 +9,13 @@ export const mockResponses = {
   auth: {
     success: {
       status: 'success',
-      jwt: 'auth-jwt-token',
-      refreshToken: 'refresh-token',
-      user: { id: 1, name: 'Test User' },
-      organizations: [{ id: 123, name: 'Test Org' }],
+      payload: {
+        jwt: 'auth-jwt-token',
+        refreshToken: 'refresh-token',
+        expiresIn: 3600,
+        user: { id: 1, name: 'Test User' },
+        organizations: [{ id: 123, name: 'Test Org' }]
+      },
     },
     mfa: {
       status: 'mfa_required',
@@ -20,17 +23,23 @@ export const mockResponses = {
     },
     mfaComplete: {
       status: 'success',
-      jwt: 'auth-jwt-token-after-mfa',
-      refreshToken: 'refresh-token-after-mfa',
-      user: { id: 1, name: 'Test User' },
-      organizations: [{ id: 123, name: 'Test Org' }],
+      payload: {
+        jwt: 'auth-jwt-token-after-mfa',
+        refreshToken: 'refresh-token-after-mfa',
+        expiresIn: 3600,
+        user: { id: 1, name: 'Test User' },
+        organizations: [{ id: 123, name: 'Test Org' }]
+      },
     },
   },
   refresh: {
     success: {
       status: 'success',
-      jwt: 'refreshed-jwt-token',
-      refreshToken: 'new-refresh-token',
+      payload: {
+        jwt: 'refreshed-jwt-token',
+        refreshToken: 'new-refresh-token',
+        expiresIn: 3600,
+      },
     },
   },
   organizations: {
@@ -218,11 +227,8 @@ export function setupMswServer(additionalHandlers: any[] = []) {
     }),
 
     // Handle specific property key lookups for tests that expect this format
-    http.get('http://test-api.example.com/property/test_key', () => {
-      return HttpResponse.json({
-        status: 'success',
-        value: 'test_value',
-      });
+    http.get('https://api.example.com/property/test_key', () => {
+      return HttpResponse.json({ status: 'success', value: 'test_value' });
     }),
 
     // Ensure all domains for property endpoints are covered
@@ -294,7 +300,7 @@ export function setupMswServer(additionalHandlers: any[] = []) {
 export function createTestSdk() {
   // Create a new SDK instance with test credentials
   const sdk = new MendSdk({
-    apiEndpoint: 'http://test-api.example.com',
+    apiEndpoint: 'https://api.example.com',
     email: 'test@example.com',
     password: 'password123',
     orgId: 123, // Set an organization ID to avoid org selection logic in tests
@@ -304,12 +310,14 @@ export function createTestSdk() {
   (sdk as any).jwt = 'auth-jwt-token';
   (sdk as any).refreshToken = 'refresh-token';
   (sdk as any).currentOrg = 123;
+  // Set expiration time in the future to prevent re-authentication
+  (sdk as any).jwtExpiresAt = Date.now() + 3600000; // 1 hour in the future
 
   // Also ensure the httpClient doesn't make real network requests
   // by replacing the fetch implementation
   if (!(sdk as any).httpClient) {
     (sdk as any).httpClient = new HttpClient({
-      apiEndpoint: 'http://test-api.example.com',
+      apiEndpoint: 'https://api.example.com',
     });
   }
 
