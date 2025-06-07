@@ -184,32 +184,32 @@ const sdk = new MendSdk({
 
 ## API Reference
 
-| Method                                          | Purpose                                |
-| ----------------------------------------------- | -------------------------------------- |
-| `request(method, path, body?, query?, signal?)` | Low level wrapper used by all helpers  |
-| `getOrg(orgId)`                                 | Fetch organization details             |
-| `getUser(userId)`                               | Retrieve a user's details              |
-| `searchPatients(query)`                         | Search patients with filters           |
-| `getPatient(id)`                                | Get a patient record                   |
-| `getPatientAssessmentScores(id)`                | Retrieve a patient's assessment scores |
-| `createPatient(payload, force?)`                | Create a new patient *(rarely pass `force=true`; only when directed by Mend support)* |
-| `updatePatient(id, payload, force?)`            | Update an existing patient             |
-| `deletePatient(id)`                             | Delete a patient                       |
-| `getAppointment(id)`                            | Retrieve an appointment                |
-| `createAppointment(payload)`                    | Create an appointment                  |
-| `listAvailableSlots(opts)`                      | Fetch available appointment slots      |
-| `getAppointmentType(id)`                        | Retrieve appointment-type details      |
-| `listOrgs()`                                    | List accessible organizations          |
-| `submitMfaCode(code)`                           | Complete MFA authentication            |
-| `switchOrg(orgId)`                              | Change the active organization         |
-| `getProperties()`                               | Fetch all application properties       |
-| `getProperty(key)`                              | Retrieve a single property value       |
-| `logout()`                                      | Clear authentication state             |
-| `listUsers(query)`                              | List all users                         |
-| `listUsersByRole(role, query)`                  | List users filtered by role            |
-| `createUser(payload)`                           | Create a user                          |
-| `updateUser(id, payload)`                       | Update a user                          |
-| `updateUserTimezone(id, tz, force?)`            | Update a user's timezone               |
+| Method                                          | Purpose                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `request(method, path, body?, query?, signal?)` | Low level wrapper used by all helpers                                                 |
+| `getOrg(orgId)`                                 | Fetch organization details                                                            |
+| `getUser(userId)`                               | Retrieve a user's details                                                             |
+| `searchPatients(query)`                         | Search patients with filters                                                          |
+| `getPatient(id)`                                | Get a patient record                                                                  |
+| `getPatientAssessmentScores(id)`                | Retrieve a patient's assessment scores                                                |
+| `createPatient(payload, force?)`                | Create a new patient _(rarely pass `force=true`; only when directed by Mend support)_ |
+| `updatePatient(id, payload, force?)`            | Update an existing patient                                                            |
+| `deletePatient(id)`                             | Delete a patient                                                                      |
+| `getAppointment(id)`                            | Retrieve an appointment                                                               |
+| `createAppointment(payload)`                    | Create an appointment                                                                 |
+| `listAvailableSlots(opts)`                      | Fetch available appointment slots                                                     |
+| `getAppointmentType(id)`                        | Retrieve appointment-type details                                                     |
+| `listOrgs()`                                    | List accessible organizations                                                         |
+| `submitMfaCode(code)`                           | Complete MFA authentication                                                           |
+| `switchOrg(orgId)`                              | Change the active organization                                                        |
+| `getProperties()`                               | Fetch all application properties                                                      |
+| `getProperty(key)`                              | Retrieve a single property value                                                      |
+| `logout()`                                      | Clear authentication state                                                            |
+| `listUsers(query)`                              | List all users                                                                        |
+| `listUsersByRole(role, query)`                  | List users filtered by role                                                           |
+| `createUser(payload)`                           | Create a user                                                                         |
+| `updateUser(id, payload)`                       | Update a user                                                                         |
+| `updateUserTimezone(id, tz, force?)`            | Update a user's timezone                                                              |
 
 ### Troubleshooting
 
@@ -225,22 +225,23 @@ any of the query parameters supported by the API (see below).
 
 ### Create a patient – required vs optional fields
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| `firstName` | ✅ | — |
-| `lastName`  | ✅ | — |
-| `birthDate` | ✅ | `YYYY-MM-DD` |
-| `gender`    | ✅ | `MALE`, `FEMALE`, `OTHER`, `UNSPECIFIED` |
-| `email`     | ✅ | Unique per Mend environment |
-| `mobile`    | ❌ | E.164 format |
-| `country`   | ❌ | Defaults to `US` if omitted and address lines present |
-| `state`, `city`, `street`, `street2`, `postal` | ❌ | Required **only** when org policy `requirePatientAddress` = `1` |
-| `language`  | ❌ | ISO-639-1 e.g. `en`, `es` |
-| `orgId`     | ❌ | Needed when creating patients across orgs |
-| `sendInvite`| ❌ | Default `true` – email invite to portal |
-| `force`     | auto | The SDK can inject this internally **only when explicitly instructed** (most integrations should ignore this) |
+| Field                                          | Required | Notes                                                                                                         |
+| ---------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `firstName`                                    | ✅       | —                                                                                                             |
+| `lastName`                                     | ✅       | —                                                                                                             |
+| `birthDate`                                    | ✅       | `YYYY-MM-DD`                                                                                                  |
+| `gender`                                       | ✅       | `MALE`, `FEMALE`, `OTHER`, `UNSPECIFIED`                                                                      |
+| `email`                                        | ✅       | Unique per Mend environment                                                                                   |
+| `mobile`                                       | ❌       | E.164 format                                                                                                  |
+| `country`                                      | ❌       | Defaults to `US` if omitted and address lines present                                                         |
+| `state`, `city`, `street`, `street2`, `postal` | ❌       | Required **only** when org policy `requirePatientAddress` = `1`                                               |
+| `language`                                     | ❌       | ISO-639-1 e.g. `en`, `es`                                                                                     |
+| `orgId`                                        | ❌       | Needed when creating patients across orgs                                                                     |
+| `sendInvite`                                   | ❌       | Default `true` – email invite to portal                                                                       |
+| `force`                                        | auto     | The SDK can inject this internally **only when explicitly instructed** (most integrations should ignore this) |
 
 Example minimal request:
+
 ```ts
 await sdk.createPatient({
   firstName: 'Jane',
@@ -361,39 +362,41 @@ The SDK includes wrappers for `/appointment` and related endpoints.
 
 ### Create an appointment – required vs optional fields
 
-| Field | Required | Notes |
-|-------|----------|-------|
-| `patientId` | ✅ | — |
-| `providerId` | ✅ | — |
-| `appointmentTypeId` | ✅ | — |
-| `startDate`, `endDate` | ✅ | UTC `YYYY-MM-DD HH:mm:ss` |
-| `optimized` | auto | SDK injects `1` – **do not set manually** |
-| `notify` | ❌ | Defaults to `1` |
-| `approved` | ❌ | Auto-determined via org property when omitted |
-| `wardId`, `addressId` | ❌ | Ward / location identifiers |
-| `symptoms` | ❌ | `[ { content: 'text' } ]` |
-| `assessmentIds` | ❌ | For combined appointment+assessment calls |
-| `checkInDate`, `appointmentStatusId` | ❌ | On-demand only |
+| Field                                | Required | Notes                                         |
+| ------------------------------------ | -------- | --------------------------------------------- |
+| `patientId`                          | ✅       | —                                             |
+| `providerId`                         | ✅       | —                                             |
+| `appointmentTypeId`                  | ✅       | —                                             |
+| `startDate`, `endDate`               | ✅       | UTC `YYYY-MM-DD HH:mm:ss`                     |
+| `optimized`                          | auto     | SDK injects `1` – **do not set manually**     |
+| `notify`                             | ❌       | Defaults to `1`                               |
+| `approved`                           | ❌       | Auto-determined via org property when omitted |
+| `wardId`, `addressId`                | ❌       | Ward / location identifiers                   |
+| `symptoms`                           | ❌       | `[ { content: 'text' } ]`                     |
+| `assessmentIds`                      | ❌       | For combined appointment+assessment calls     |
+| `checkInDate`, `appointmentStatusId` | ❌       | On-demand only                                |
 
 Example minimal request:
+
 ```ts
 await sdk.createAppointment({
   patientId: 123,
   providerId: 456,
   appointmentTypeId: 789,
   startDate: '2025-07-04 14:00:00', // UTC
-  endDate:   '2025-07-04 14:30:00', // UTC
+  endDate: '2025-07-04 14:30:00', // UTC
 });
 ```
 
 Example full request:
+
 ```ts
 await sdk.createAppointment({
   patientId: 123,
   providerId: 456,
   appointmentTypeId: 789,
   startDate: '2025-07-04 14:00:00',
-  endDate:   '2025-07-04 14:30:00',
+  endDate: '2025-07-04 14:30:00',
   notify: 1,
   approved: 1,
   wardId: 33,
@@ -404,11 +407,13 @@ await sdk.createAppointment({
 ```
 
 ### List available slots
+
 ```ts
 const slots = await sdk.listAvailableSlots(456, 789, '2025-07-01 00:00:00');
 ```
 
 ### Get appointment-type details
+
 ```ts
 const type = await sdk.getAppointmentType(789);
 ```
@@ -416,8 +421,9 @@ const type = await sdk.getAppointmentType(789);
 ## Changelog
 
 ### [1.2.0] – 2025-06-07
-* Added appointment helpers: `createAppointment`, `listAvailableSlots`, `getAppointmentType`.
-* `createAppointment` auto-injects `optimized=1`.
+
+- Added appointment helpers: `createAppointment`, `listAvailableSlots`, `getAppointmentType`.
+- `createAppointment` auto-injects `optimized=1`.
 
 ## Development
 

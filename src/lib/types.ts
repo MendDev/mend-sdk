@@ -89,7 +89,7 @@ export interface AppointmentPayload {
   providerId: number;
   appointmentTypeId: number;
   startDate: string; // UTC – "YYYY-MM-DD HH:mm:ss"
-  endDate: string;   // UTC – "YYYY-MM-DD HH:mm:ss"
+  endDate: string; // UTC – "YYYY-MM-DD HH:mm:ss"
 
   /* Optional but common */
   optimized?: 1; // Injected by SDK

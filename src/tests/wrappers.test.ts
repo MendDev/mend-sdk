@@ -64,9 +64,13 @@ const server = setupServer(
     const forceParam = url.searchParams.get('force');
 
     if (forceParam === 'true' || body.force === 1) {
-      return HttpResponse.json({ payload: { id: 3, firstName: body.firstName, lastName: body.lastName, force: true } });
+      return HttpResponse.json({
+        payload: { id: 3, firstName: body.firstName, lastName: body.lastName, force: true },
+      });
     }
-    return HttpResponse.json({ payload: { id: 2, firstName: body.firstName, lastName: body.lastName } });
+    return HttpResponse.json({
+      payload: { id: 2, firstName: body.firstName, lastName: body.lastName },
+    });
   }),
   http.put('https://api.example.com/patient/:patientId', async ({ request, params }) => {
     const { patientId } = params;
@@ -275,18 +279,12 @@ describe('MendSdk Convenience Methods', () => {
       lastName: 'Smith',
       birthDate: '1990-01-01',
       gender: 'MALE' as const,
-      email: 'john.smith@example.com'
+      email: 'john.smith@example.com',
     };
     const requestSpy = vi.spyOn(sdk, 'request' as any);
     const result = await sdk.createPatient<{ payload: { id: number } }>(patientData);
 
-    expect(requestSpy).toHaveBeenCalledWith(
-      'POST',
-      '/patient',
-      patientData,
-      undefined,
-      undefined,
-    );
+    expect(requestSpy).toHaveBeenCalledWith('POST', '/patient', patientData, undefined, undefined);
     expect(result.payload.id).toBe(2);
   });
 
@@ -381,13 +379,10 @@ describe('MendSdk Convenience Methods', () => {
       lastName: 'Smith',
       birthDate: '1992-02-02',
       gender: 'FEMALE' as const,
-      email: 'jane.smith@example.com'
+      email: 'jane.smith@example.com',
     };
     const requestSpy = vi.spyOn(sdk, 'request' as any);
-    const result = await sdk.createPatient<{ payload: { force: boolean } }>(
-      patientData,
-      true,
-    );
+    const result = await sdk.createPatient<{ payload: { force: boolean } }>(patientData, true);
 
     expect(requestSpy).toHaveBeenCalledWith(
       'POST',

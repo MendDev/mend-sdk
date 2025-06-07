@@ -111,7 +111,9 @@ describe('Security features', () => {
   it('throws on http endpoint outside production as well', () => {
     const env = process.env.NODE_ENV;
     process.env.NODE_ENV = 'test';
-    expect(() => new MendSdk({ apiEndpoint: 'http://api.example.com', email: 'a', password: 'b' })).toThrow(MendError);
+    expect(
+      () => new MendSdk({ apiEndpoint: 'http://api.example.com', email: 'a', password: 'b' }),
+    ).toThrow(MendError);
     process.env.NODE_ENV = env;
   });
 

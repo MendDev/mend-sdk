@@ -501,10 +501,7 @@ export class MendSdk {
     if (!payload.endDate) missing.push('endDate');
 
     if (missing.length) {
-      throw new MendError(
-        `Missing required fields: ${missing.join(', ')}`,
-        ERROR_CODES.SDK_CONFIG,
-      );
+      throw new MendError(`Missing required fields: ${missing.join(', ')}`, ERROR_CODES.SDK_CONFIG);
     }
 
     /* Auto-inject approved flag when caller omitted it ---------------------------*/
@@ -554,7 +551,13 @@ export class MendSdk {
     appointmentTypeId: number,
     signal?: AbortSignal,
   ): Promise<T> {
-    return this.request<T>('GET', `/appointment-type/${appointmentTypeId}`, undefined, undefined, signal);
+    return this.request<T>(
+      'GET',
+      `/appointment-type/${appointmentTypeId}`,
+      undefined,
+      undefined,
+      signal,
+    );
   }
 
   /**

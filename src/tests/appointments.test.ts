@@ -14,7 +14,7 @@ const server = setupServer(
       payload: { orgs: [{ id: 123, name: 'Test Organization' }] },
     });
   }),
-  
+
   http.put('https://api.example.com/session/org/:orgId', ({ params }) => {
     const { orgId } = params;
     return HttpResponse.json({ payload: { org_id: Number(orgId) } });
@@ -22,18 +22,18 @@ const server = setupServer(
 
   // Property endpoint - returns all properties
   http.get('https://api.example.com/property', () => {
-    return HttpResponse.json({ 
-      payload: { 
-        properties: { 
+    return HttpResponse.json({
+      payload: {
+        properties: {
           'scheduling.patients.autoApprove': 1,
-          'some.other.property': 'value'
-        } 
-      }
+          'some.other.property': 'value',
+        },
+      },
     });
   }),
-  
+
   // Handle unknown properties with 404
-  
+
   // Appointment endpoints
   http.get('https://api.example.com/appointment/:id', ({ params }) => {
     const { id } = params;
@@ -48,9 +48,9 @@ const server = setupServer(
       },
     });
   }),
-  
+
   http.post('https://api.example.com/appointment', async ({ request }) => {
-    const body = await request.json() as Record<string, any>;
+    const body = (await request.json()) as Record<string, any>;
     return HttpResponse.json({
       payload: {
         id: 42,
@@ -58,12 +58,12 @@ const server = setupServer(
       },
     });
   }),
-  
+
   http.get('https://api.example.com/appointment/available-slots', ({ request }) => {
     const url = new URL(request.url);
     const providerId = url.searchParams.get('providerId');
     const appointmentTypeId = url.searchParams.get('appointmentTypeId');
-    
+
     if (providerId && appointmentTypeId) {
       return HttpResponse.json({
         payload: [
@@ -82,10 +82,10 @@ const server = setupServer(
         ],
       });
     }
-    
+
     return HttpResponse.json({ payload: [] });
   }),
-  
+
   http.get('https://api.example.com/appointment-type/:id', ({ params }) => {
     const { id } = params;
     return HttpResponse.json({
@@ -128,7 +128,13 @@ describe('Appointment API helpers', () => {
       const requestSpy = vi.spyOn(sdk, 'request' as any);
       const result = await sdk.getAppointment(42);
 
-      expect(requestSpy).toHaveBeenCalledWith('GET', '/appointment/42', undefined, undefined, undefined);
+      expect(requestSpy).toHaveBeenCalledWith(
+        'GET',
+        '/appointment/42',
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result.payload).toMatchObject({
         id: 42,
         patientId: 1,
@@ -152,7 +158,7 @@ describe('Appointment API helpers', () => {
 
       // Get the actual call count to help with debugging
       const callCount = requestSpy.mock.calls.length;
-      
+
       // Find the appointment creation call (the last call should be the POST to /appointment)
       let appointmentCallIndex = -1;
       for (let i = 0; i < callCount; i++) {
@@ -162,9 +168,9 @@ describe('Appointment API helpers', () => {
           break;
         }
       }
-      
+
       expect(appointmentCallIndex).toBeGreaterThan(0);
-      
+
       // Verify the appointment creation call with the correct payload
       expect(requestSpy).toHaveBeenNthCalledWith(
         appointmentCallIndex,
@@ -203,7 +209,7 @@ describe('Appointment API helpers', () => {
       // Find the appointment creation call (should be a POST to /appointment)
       let appointmentCallIndex = -1;
       const callCount = requestSpy.mock.calls.length;
-      
+
       for (let i = 0; i < callCount; i++) {
         const call = requestSpy.mock.calls[i];
         if (call[0] === 'POST' && call[1] === '/appointment') {
@@ -211,9 +217,9 @@ describe('Appointment API helpers', () => {
           break;
         }
       }
-      
+
       expect(appointmentCallIndex).toBeGreaterThan(0);
-      
+
       // Verify appointment creation with correct payload including overridden approved value
       expect(requestSpy).toHaveBeenNthCalledWith(
         appointmentCallIndex,
@@ -246,7 +252,9 @@ describe('Appointment API helpers', () => {
       } as AppointmentPayload;
 
       await expect(sdk.createAppointment(appointmentData)).rejects.toThrow(MendError);
-      await expect(sdk.createAppointment(appointmentData)).rejects.toThrow('Missing required fields');
+      await expect(sdk.createAppointment(appointmentData)).rejects.toThrow(
+        'Missing required fields',
+      );
     });
   });
 
